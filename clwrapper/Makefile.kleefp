@@ -1,0 +1,2 @@
+default: log.o clerror.o clwrapper.o
+include ../Makefile.kleefp.common

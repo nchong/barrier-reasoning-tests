@@ -1,0 +1,3 @@
+PROG = compact
+default: $(PROG)
+include ../../Makefile.kleefp.common

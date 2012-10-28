@@ -1,0 +1,7 @@
+default:
+	cd clwrapper; make -f Makefile.kleefp
+	cd tests; make -f Makefile.kleefp
+
+clean:
+	cd clwrapper; make -f Makefile.kleefp clean
+	cd tests; make -f Makefile.kleefp clean

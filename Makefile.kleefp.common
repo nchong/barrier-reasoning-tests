@@ -1,0 +1,22 @@
+TOP := $(dir $(lastword $(MAKEFILE_LIST)))
+
+CXX=clang++
+LD=llvm-ld
+
+ifndef KLEE_ROOT
+$(error KLEE_ROOT should point to klee-fp directory)
+endif
+INCLUDE=-I $(TOP)/include -I $(KLEE_ROOT)/include
+
+CLWRAPPER_OBJS_ = log.o clerror.o clwrapper.o
+CLWRAPPER_OBJS=$(patsubst %, $(TOP)/clwrapper/%, $(CLWRAPPER_OBJS_))
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -emit-llvm -c $< -o $@
+
+$(PROG): $(CLWRAPPER_OBJS) main.o
+	$(LD) $^ -o $@
+
+.PHONY: clean
+clean:
+	rm -rf *.o klee-* *.bc $(PROG)
