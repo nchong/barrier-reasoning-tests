@@ -12,7 +12,7 @@ CLWRAPPER_OBJS_ = log.o clerror.o clwrapper.o
 CLWRAPPER_OBJS=$(patsubst %, $(TOP)/clwrapper/%, $(CLWRAPPER_OBJS_))
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDE) -emit-llvm -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -D__KLEE -emit-llvm -c $< -o $@
 
 $(PROG): $(CLWRAPPER_OBJS) main.o
 	$(LD) $^ -o $@

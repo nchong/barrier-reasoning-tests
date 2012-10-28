@@ -1,2 +1,3 @@
 default: log.o clerror.o clwrapper.o
+CXXFLAGS = -DLOG_LEVEL=LOG_INFO
 include ../Makefile.kleefp.common

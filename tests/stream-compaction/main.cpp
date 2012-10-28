@@ -1,5 +1,7 @@
 #include "clwrapper.h"
+#ifdef __KLEE
 #include <klee/klee.h>
+#endif
 
 #include <cassert>
 #include <cstdio>
@@ -14,7 +16,9 @@ int main(int argc, char **argv) {
   size_t ArraySize = N * sizeof(int);
   int *in  = (int *)malloc(ArraySize);
   int *out = (int *)malloc(ArraySize);
+#ifdef __KLEE
   klee_make_symbolic(in, ArraySize, "in");
+#endif
 
   // initialise for device 0 on platform 0, with profiling off
   // this creates a context and command queue
