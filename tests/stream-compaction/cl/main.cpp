@@ -7,12 +7,12 @@
 #include <cstdio>
 #include <iostream>
 
-int main(int argc, char **argv) {
+int main(int, char **) {
   // platform info
   std::cout << clinfo();
 
   // test data
-  int N = 4;
+  unsigned N = 4;
   size_t ArraySize = N * sizeof(int);
   int *in  = (int *)malloc(ArraySize);
   int *out = (int *)malloc(ArraySize);
@@ -22,8 +22,8 @@ int main(int argc, char **argv) {
 
   // initialise for device 0 on platform 0, with profiling off
   // this creates a context and command queue
-  int platform = 0;
-  int device = 0;
+  unsigned platform = 0;
+  unsigned device = 0;
   bool profiling = false;
   CLWrapper clw(platform, device, profiling);
 

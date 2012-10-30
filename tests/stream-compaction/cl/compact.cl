@@ -1,7 +1,7 @@
 __kernel void compact(__global int*out, __global int*in,
   __local unsigned *flag,
   __local unsigned *idx,
-  int n) {
+  unsigned n) {
 
   unsigned t = get_local_id(0);
 
