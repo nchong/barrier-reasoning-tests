@@ -1,0 +1,37 @@
+TOP := $(dir $(lastword $(MAKEFILE_LIST)))
+
+CXX=g++
+CXXFLAGS ?=
+CXXFLAGS += -Wall -Wextra -Werror -pedantic -Wno-variadic-macros
+
+CLWRAPPER = $(TOP)/clwrapper/libclwrapper.so
+INCLUDE = -I $(TOP)/include
+
+# OPENCL LIBRARIES BASED ON OS
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+OPENCL_LIB = -framework OpenCL
+OPENCL_INC =
+SHARED = -dynamiclib
+endif
+
+ifeq ($(UNAME), Linux)
+.PHONY: .check-env
+.check-env:
+	@if [ ! -d "$(CLDIR)" ]; then \
+		echo "ERROR: set CLDIR variable."; exit 1; \
+	fi
+OPENCL_LIB = -L$(CLDIR)/lib -lOpenCL
+OPENCL_INC = -I $(CLDIR)/include
+SHARED = -shared
+endif
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(OPENCL_INC) $(INCLUDE) -c -o $@ $<
+
+$(PROG): $(CLWRAPPER) main.o
+	$(CXX) $(OPENCL_LIB) $(OPENCL_INC) $^ -o $@
+
+.PHONY: clean
+clean:
+	rm -f *.o libclwrapper.so $(PROG)
