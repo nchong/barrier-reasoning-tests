@@ -1,9 +1,7 @@
-#include "cutil.h"
-#include "klee.h"
 #include <cassert>
 #include <cstdio>
 
-#define N 8
+#define N 4
 
 #define PREDICATE(x) (((x & 1) == 0) ? 1 : 0)
 
@@ -73,9 +71,7 @@ int main(int argc, char **argv) {
   cudaMemcpy(d_in, in, ArraySize, cudaMemcpyHostToDevice);
 
   // run the kernel
-  __begin_GPU(N);
-  compact(d_out, d_in);
-  __end_GPU();
+  compact<<<1,N>>>(d_out, d_in);
 
   // memcpy back the result
   cudaMemcpy(out, d_out, ArraySize, cudaMemcpyDeviceToHost);
