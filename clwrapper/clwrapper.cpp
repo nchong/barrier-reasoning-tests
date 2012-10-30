@@ -13,19 +13,19 @@
 
 using namespace std;
 
-CLWrapper::CLWrapper(int p, int d, bool profiling, bool all_devices) :
+CLWrapper::CLWrapper(unsigned p, unsigned d, bool profiling, bool all_devices) :
   num_platforms(0), platforms(NULL), p(p),
   num_devices(0), devices(NULL), d(d),
   profiling(profiling) {
   LOG(LOG_INFO, "Initializing context and command queue for device %d on platform %d", d, p);
 
   num_platforms = query_num_platforms();
-  assert(p < (int)num_platforms);
+  assert(p < (unsigned)num_platforms);
   platforms = get_platform_list();      
 
   num_devices = query_num_devices(platforms[p]);
   devices = get_device_list(platforms[p]);
-  assert(d < (int)num_devices);
+  assert(d < (unsigned)num_devices);
 
   attach_context(all_devices);
   attach_command_queue(profiling ? CL_QUEUE_PROFILING_ENABLE : 0);
@@ -70,9 +70,8 @@ cl_program &CLWrapper::compile_from_string(const char *program_string,
   ASSERT_NO_CL_ERROR(ret);
   programs.push_back(program);
 
-  char flags[100] = "-Werror";
-  //stringstream flags;
-  //flags << extra_flags;
+  stringstream flags;
+  flags << extra_flags;
 
   // Math intrinsics options
   //flags << " -cl-single-precision-constant";
@@ -94,7 +93,7 @@ cl_program &CLWrapper::compile_from_string(const char *program_string,
   cl_uint ndev = (all_devices ? num_devices : 1);
   cl_device_id *dev = (all_devices ? devices : &devices[d]);
   //pfn_notify=NULL -> call is blocking
-  cl_uint builderr = clBuildProgram(program, ndev, dev, flags, /*pfn_notify=*/NULL, /*user_data=*/NULL);
+  cl_uint builderr = clBuildProgram(program, ndev, dev, flags.str().c_str(), /*pfn_notify=*/NULL, /*user_data=*/NULL);
 
   //print out build logs
   if (builderr != CL_SUCCESS) {
@@ -138,6 +137,7 @@ cl_program &CLWrapper::compile(const char *fname,
   } else {
     LOG(LOG_INFO, "Compiling file <%s> for device %d", fname, d);
   }
+  LOG(LOG_INFO, "\twith extra_flags %s", extra_flags.c_str());
 
 	fstream f(fname, (fstream::in | fstream::binary));
   if (!f.is_open()) {
@@ -356,6 +356,12 @@ void CLWrapper::set_kernel_arg(cl_kernel k, int i, int &n) {
   //LOG(LOG_INFO, "Kernel arg%d of %s is int %d", i, name_of_kernel(k).c_str(), n);
   ASSERT_NO_CL_ERROR(
     clSetKernelArg(k, i, sizeof(int), &n));
+}
+
+void CLWrapper::set_kernel_arg(cl_kernel k, int i, unsigned &n) {
+  //LOG(LOG_INFO, "Kernel arg%d of %s is unsigned %d", i, name_of_kernel(k).c_str(), n);
+  ASSERT_NO_CL_ERROR(
+    clSetKernelArg(k, i, sizeof(unsigned), &n));
 }
 
 void CLWrapper::set_kernel_arg(cl_kernel k, int i, float &n) {

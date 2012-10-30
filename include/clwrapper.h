@@ -46,6 +46,7 @@ class CLWrapper {
     void attach_command_queue(cl_command_queue_properties properties=0);
 
     void set_kernel_arg(cl_kernel k, int i, int &n);
+    void set_kernel_arg(cl_kernel k, int i, unsigned &n);
     void set_kernel_arg(cl_kernel k, int i, float &n);
     void set_kernel_arg(cl_kernel k, int i, double &n);
     void set_kernel_arg(cl_kernel k, int i, cl_mem &m);
@@ -56,7 +57,7 @@ class CLWrapper {
     CLWrapper& operator=(const CLWrapper& that);
 
   public:
-    CLWrapper(int p=0, int d=0, bool profiling=false, bool all_devices=false);
+    CLWrapper(unsigned p=0, unsigned d=0, bool profiling=false, bool all_devices=false);
     ~CLWrapper();
     bool has_profiling();
     cl_program &compile(const char *fname,
