@@ -1,5 +1,5 @@
 default:
-	cd stream-compaction; make -f Makefile.kleefp
+	cd stream-compaction/cl; make -f Makefile.kleefp
 
 clean:
-	cd stream-compaction; make -f Makefile.kleefp clean
+	cd stream-compaction/cl; make -f Makefile.kleefp clean
