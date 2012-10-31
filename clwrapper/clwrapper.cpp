@@ -62,7 +62,7 @@ bool CLWrapper::has_profiling() {
 }
 
 cl_program &CLWrapper::compile_from_string(const char *program_string,
-    const string &extra_flags, bool all_devices) {
+    char *extra_flags, bool all_devices) {
   cl_int ret;
   //lengths=NULL -> program_string is null terminated
   cl_program program = clCreateProgramWithSource(context, /*count=*/1, (const char **) &program_string, /*lengths=*/NULL, &ret );
@@ -70,8 +70,10 @@ cl_program &CLWrapper::compile_from_string(const char *program_string,
   ASSERT_NO_CL_ERROR(ret);
   programs.push_back(program);
 
-  stringstream flags;
-  flags << extra_flags;
+  char flags[1024];
+  strncat(flags, extra_flags, 1024);
+  //stringstream flags;
+  //flags << extra_flags;
 
   // Math intrinsics options
   //flags << " -cl-single-precision-constant";
@@ -93,7 +95,7 @@ cl_program &CLWrapper::compile_from_string(const char *program_string,
   cl_uint ndev = (all_devices ? num_devices : 1);
   cl_device_id *dev = (all_devices ? devices : &devices[d]);
   //pfn_notify=NULL -> call is blocking
-  cl_uint builderr = clBuildProgram(program, ndev, dev, flags.str().c_str(), /*pfn_notify=*/NULL, /*user_data=*/NULL);
+  cl_uint builderr = clBuildProgram(program, ndev, dev, flags, /*pfn_notify=*/NULL, /*user_data=*/NULL);
 
   //print out build logs
   if (builderr != CL_SUCCESS) {
@@ -131,13 +133,13 @@ cl_program &CLWrapper::compile_from_string(const char *program_string,
 }
 
 cl_program &CLWrapper::compile(const char *fname,
-    const string &extra_flags, bool all_devices) {
+    char *extra_flags, bool all_devices) {
   if (all_devices) {
     LOG(LOG_INFO, "Compiling file <%s> for all devices", fname);
   } else {
     LOG(LOG_INFO, "Compiling file <%s> for device %d", fname, d);
   }
-  LOG(LOG_INFO, "\twith extra_flags %s", extra_flags.c_str());
+  LOG(LOG_INFO, "\twith extra_flags %s", extra_flags);
 
 	fstream f(fname, (fstream::in | fstream::binary));
   if (!f.is_open()) {
