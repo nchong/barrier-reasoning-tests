@@ -38,9 +38,7 @@ int main(int, char **) {
 
   // compile the OpenCL code
   const char *filename = "compact.cl";
-  std::stringstream extra_flags;
-  extra_flags << "-DMAXWRITE=" << MAXWRITE;
-  cl_program program = clw.compile(filename, extra_flags.str().c_str());
+  cl_program program = clw.compile(filename);
 
   // get kernel handle
   cl_kernel k = clw.create_kernel(program, "compact");

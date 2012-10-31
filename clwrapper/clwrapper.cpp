@@ -10,6 +10,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <string.h>
 
 using namespace std;
 
@@ -139,7 +140,7 @@ cl_program &CLWrapper::compile(const char *fname,
   } else {
     LOG(LOG_INFO, "Compiling file <%s> for device %d", fname, d);
   }
-  LOG(LOG_INFO, "\twith extra_flags %s", extra_flags);
+  LOG(LOG_INFO, "\twith extra_flags [%s]", extra_flags);
 
 	fstream f(fname, (fstream::in | fstream::binary));
   if (!f.is_open()) {

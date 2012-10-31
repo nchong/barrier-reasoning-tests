@@ -1,4 +1,5 @@
 #include "choose.h"
+#define MAXWRITE 4
 
 __kernel void compact(__global int*out, __global int*in,
   __local unsigned *num,
