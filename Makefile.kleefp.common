@@ -16,6 +16,7 @@ CLWRAPPER_OBJS=$(patsubst %, $(TOP)/clwrapper/%, $(CLWRAPPER_OBJS_))
 
 $(PROG): $(CLWRAPPER_OBJS) main.o
 	$(LD) $^ -o $@
+	@echo "run kleefp $(PROG)"
 
 .PHONY: clean
 clean:

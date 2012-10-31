@@ -1,0 +1,7 @@
+default:
+	cd stream-compaction/cuda; make -f Makefile.gklee
+	cd n-stream-compaction/cuda; make -f Makefile.gklee
+
+clean:
+	cd stream-compaction/cuda; make -f Makefile.gklee clean
+	cd n-stream-compaction/cuda; make -f Makefile.gklee clean
