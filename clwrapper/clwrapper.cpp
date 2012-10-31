@@ -63,7 +63,7 @@ bool CLWrapper::has_profiling() {
 }
 
 cl_program &CLWrapper::compile_from_string(const char *program_string,
-    char *extra_flags, bool all_devices) {
+  const char *extra_flags, bool all_devices) {
   cl_int ret;
   //lengths=NULL -> program_string is null terminated
   cl_program program = clCreateProgramWithSource(context, /*count=*/1, (const char **) &program_string, /*lengths=*/NULL, &ret );
@@ -134,7 +134,7 @@ cl_program &CLWrapper::compile_from_string(const char *program_string,
 }
 
 cl_program &CLWrapper::compile(const char *fname,
-    char *extra_flags, bool all_devices) {
+  const char *extra_flags, bool all_devices) {
   if (all_devices) {
     LOG(LOG_INFO, "Compiling file <%s> for all devices", fname);
   } else {
