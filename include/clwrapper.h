@@ -61,10 +61,10 @@ class CLWrapper {
     ~CLWrapper();
     bool has_profiling();
     cl_program &compile(const char *fname,
-        const string &extra_flags=string(""),
+        char *extra_flags="",
         bool all_devices=false);
     cl_program &compile_from_string(const char *program_string,
-        const string &extra_flags=string(""),
+        char *extra_flags="",
         bool all_devices=false);
 
     void flush_command_queue();
