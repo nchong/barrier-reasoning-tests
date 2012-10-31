@@ -6,20 +6,20 @@
 #define MAXWRITE 4
 
 __global__ void compact(int *out, int*in) {
-  __shared__ unsigned flag[N];
+  __shared__ unsigned num[N];
   __shared__ unsigned idx[N];
 
   unsigned t = threadIdx.x;
 
   // (i) number of times to repeat element
-  flag[t] = CHOOSE(in[t], MAXWRITE);
+  num[t] = CHOOSE(in[t], MAXWRITE);
 
   // (ii) compute indexes for scatter
   //      using an exclusive prefix sum
   __syncthreads();
   if (t < N/2) {
-    idx[2*t]   = flag[2*t];
-    idx[2*t+1] = flag[2*t+1];
+    idx[2*t]   = num[2*t];
+    idx[2*t+1] = num[2*t+1];
   }
   // (a) upsweep
   int offset = 1;
