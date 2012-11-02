@@ -1,0 +1,83 @@
+#define daddf(x,y) (x + y)
+#define ddiv2(x) (x >> 1)
+#define deq(x,y) (x == y)
+#define dgt(x,y) (x > y)
+#define dgteq(x,y) (x >= y)
+#define dlt(x,y) (x < y)
+#define dlteq(x,y) (x <= y)
+#define dmodpow2(x,y) (x & (y-1))
+#define dmul(x,y) (x * y)
+#define dmul2(x) (x << 1)
+#define dmul2add1(x) (dmul2(x) | 1)
+#define dsub(x,y) (x - y)
+#define iseven(x) ((x & 1) == 0)
+#define isone(bit,x) (((x >> bit) & 1) == 1)
+#define pow2(bit) (1 << bit)
+
+#define raddf(x,y) (x + y)
+#define rlteq(x,y) (x <= y)
+#define rnonnegative(x) rlteq(0,x)
+
+#define tid get_local_id(0)
+
+#define isvertex(x,offset) (deq(offset,0) | (dmodpow2(x+1,offset) == 0))
+#define stopped(x,offset) isvertex(daddf(x,offset), dmul2(offset))
+#define left(x,offset) dsub(x,ddiv2(offset))
+#define iselement(x)  (rlteq(0,x) & dlt(x,{{N}}))
+#define isthreadid(t) (dlteq(0,t) & dlt(t,{{NDIV2}}))
+
+#define ai_idx(offset,tid) (dsub(dmul(offset, dmul2add1(tid)),1))
+#define bi_idx(offset,tid) (dsub(dmul(offset, daddf(dmul2(tid),2)),1))
+
+// ---------------------------------------------------------------------------
+// UPSWEEP INVARIANTS
+// ---------------------------------------------------------------------------
+#define upsweep_core(offset,result,len,x) \
+  {{upsweep_core(N)}}
+
+#if 0
+#define upsweep_nooverflow(offset,result,len,x) \
+  {{upsweep_nooverflow(N)}}
+
+#define upsweep(offset,result,len,x) \
+  (upsweep_core(offset,result,len,x) & upsweep_nooverflow(offset,result,len,x))
+#else
+#define upsweep(offset,result,len,x) \
+  upsweep_core(offset,result,len,x)
+#endif
+
+#define upsweep_barrier(tid,offset,result,len) \
+  {{upsweep_barrier(N)}}
+
+#define upsweep_d_offset \
+  {{upsweep_d_offset(N)}}
+
+// ---------------------------------------------------------------------------
+// DOWNSWEEP INVARIANTS
+// ---------------------------------------------------------------------------
+#define sum_pow2_zeroes(bit,x) \
+  {{sum_pow2_zeroes(N)}}
+
+#define term(ghostsum,bit,x)                                   \
+  __ite(!isone(bit,x), 0,                                      \
+  ghostsum[dsub(daddf(x, sum_pow2_zeroes(bit,x)), pow2(bit))])
+
+#define downsweep_core(offset,result,ghostsum,x) \
+  {{downsweep_core(N)}}
+
+#if 0
+#define downsweep_nooverflow(offset,result,ghostsum,x) \
+  {{downsweep_nooverflow(N)}}
+
+#define downsweep(offset,result,ghostsum,x) \
+  (downsweep_core(offset,result,ghostsum,x) & downsweep_nooverflow(offset,result,ghostsum,x))
+#else
+#define downsweep(offset,result,ghostsum,x) \
+  downsweep_core(offset,result,ghostsum,x)
+#endif
+
+#define downsweep_barrier(tid,offset,result,ghostsum) \
+  {{downsweep_barrier(N)}}
+
+#define downsweep_d_offset \
+  {{downsweep_d_offset(N)}}
