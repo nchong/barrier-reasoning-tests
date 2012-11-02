@@ -27,7 +27,7 @@ __kernel void compact(__local unsigned *len) {
     __invariant(upsweep_d_offset),
     __invariant(upsweep_barrier(tid,offset,result,len)),
     d > 0;
-    d /= 2) {
+    d >>= 1) {
     __barrier_invariant(upsweep_barrier(tid,offset,result,len), tid, 2*tid, 2*tid+1);
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
@@ -35,7 +35,7 @@ __kernel void compact(__local unsigned *len) {
       unsigned bi = offset * (2 * t + 2) - 1;
       result[bi] += result[ai];
     }
-    offset *= 2;
+    offset <<= 1;
   }
   __assert(offset == N);
   __assert(upsweep_barrier(tid,/*offset=*/N,result,len)),
@@ -50,12 +50,12 @@ __kernel void compact(__local unsigned *len) {
     unsigned d = 1;
     __invariant(downsweep_d_offset),
     __invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)),
-    __invariant(downsweep_barrier(tid,ddiv2(offset),result,ghostsum)),
+    __invariant(downsweep_barrier(tid,div2(offset),result,ghostsum)),
     d < N;
-    d *= 2) {
-    offset /= 2;
+    d <<= 1) {
+    offset >>= 1;
     __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), tid);
-    __barrier_invariant(downsweep_barrier(tid,offset,result,ghostsum), tid, ddiv2(tid));
+    __barrier_invariant(downsweep_barrier(tid,offset,result,ghostsum), tid, div2(tid));
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
       int ai = offset * (2 * t + 1) - 1;
@@ -65,4 +65,6 @@ __kernel void compact(__local unsigned *len) {
       result[bi] += temp;
     }
   }
+  __assert(offset == 1);
+
 }

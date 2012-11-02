@@ -1,33 +1,21 @@
-#define daddf(x,y) (x + y)
-#define ddiv2(x) (x >> 1)
-#define deq(x,y) (x == y)
-#define dgt(x,y) (x > y)
-#define dgteq(x,y) (x >= y)
-#define dlt(x,y) (x < y)
-#define dlteq(x,y) (x <= y)
-#define dmodpow2(x,y) (x & (y-1))
-#define dmul(x,y) (x * y)
-#define dmul2(x) (x << 1)
-#define dmul2add1(x) (dmul2(x) | 1)
-#define dsub(x,y) (x - y)
-#define iseven(x) ((x & 1) == 0)
+#define div2(x) (x >> 1)
 #define isone(bit,x) (((x >> bit) & 1) == 1)
+#define modpow2(x,y) (x & (y-1))
+#define mul2(x) (x << 1)
+#define mul2add1(x) (mul2(x) | 1)
 #define pow2(bit) (1 << bit)
 
-#define raddf(x,y) (x + y)
-#define rlteq(x,y) (x <= y)
-#define rnonnegative(x) rlteq(0,x)
-
 #define tid get_local_id(0)
+#define other_tid __other_int(tid)
 
-#define isvertex(x,offset) (deq(offset,0) | (dmodpow2(x+1,offset) == 0))
-#define stopped(x,offset) isvertex(daddf(x,offset), dmul2(offset))
-#define left(x,offset) dsub(x,ddiv2(offset))
-#define iselement(x)  (rlteq(0,x) & dlt(x,{{N}}))
-#define isthreadid(t) (dlteq(0,t) & dlt(t,{{NDIV2}}))
+#define isvertex(x,offset) ((offset == 0) | (modpow2(x+1,offset) == 0))
+#define stopped(x,offset) isvertex(x+offset, mul2(offset))
+#define left(x,offset) (x - div2(offset))
+#define iselement(x)  ((0 < x) & (x < {{N}}))
+#define isthreadid(t) ((0 < t) & (t < {{NDIV2}}))
 
-#define ai_idx(offset,tid) (dsub(dmul(offset, dmul2add1(tid)),1))
-#define bi_idx(offset,tid) (dsub(dmul(offset, daddf(dmul2(tid),2)),1))
+#define ai_idx(offset,tid) ((offset * mul2add1(tid)) - 1)
+#define bi_idx(offset,tid) ((offset * (mul2(tid)+2)) - 1)
 
 // ---------------------------------------------------------------------------
 // UPSWEEP INVARIANTS
@@ -60,7 +48,7 @@
 
 #define term(ghostsum,bit,x)                                   \
   __ite(!isone(bit,x), 0,                                      \
-  ghostsum[dsub(daddf(x, sum_pow2_zeroes(bit,x)), pow2(bit))])
+  ghostsum[x + sum_pow2_zeroes(bit,x) - pow2(bit)])
 
 #define downsweep_core(offset,result,ghostsum,x) \
   {{downsweep_core(N)}}

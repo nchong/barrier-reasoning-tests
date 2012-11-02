@@ -19,7 +19,7 @@ def summation(terms,f):
 def upsweep_pattern(N,rhs):
   terms = [ 'len[x]' ]
   def lhs(off):
-    return '((deq(offset, %d) & isvertex(x,offset)) | (dlt(%d,offset) & stopped(x,%d)))' % (off,off,off)
+    return '(((offset == %d) & isvertex(x,offset)) | ((%d < offset) & stopped(x,%d)))' % (off,off,off)
   body = []
   for offset in [2**i for i in range(log2(N)+1)]:
     body.append('__implies(%s, %s)' % (lhs(offset), rhs(terms)))
@@ -37,14 +37,14 @@ def upsweep_barrier(N):
   def gencase(d,offset,rel,aibi):
     idx = '%s_idx(%d,tid)' % (aibi,N/2/d)
     rhs = 'upsweep(offset,result,len,%s)' % idx
-    return '__implies(dlt(tid, %d) & %s(offset, %d), %s)' % (d,rel,offset,rhs)
+    return '__implies((tid < %d) & (offset %s %d), %s)' % (d,rel,offset,rhs)
   ds = [ 2**i for i in reversed(range(log2(N)-1)) ]
   offsets = [ 2**i for i in range(2,log2(N)+1) ]
   assert len(ds) == len(offsets)
-  cases.append( gencase(N/2,1,'dgteq','ai') )
-  cases += [    gencase(d,offset,'dgteq','ai') for d,offset in zip(ds,offsets) ]
-  cases.append( gencase(N/2,2,'dlteq','bi') )
-  cases += [    gencase(d,offset,'deq','bi') for d,offset in zip(ds,offsets) ]
+  cases.append( gencase(N/2,1,'>=','ai') )
+  cases += [    gencase(d,offset,'>=','ai') for d,offset in zip(ds,offsets) ]
+  cases.append( gencase(N/2,2,'<=','bi') )
+  cases += [    gencase(d,offset,'==','bi') for d,offset in zip(ds,offsets) ]
   return '(' + ' & \\\n  '.join(cases) + ')'
 
 def upsweep_d_offset(N, include_loop_exit=True):
@@ -56,22 +56,22 @@ def upsweep_d_offset(N, include_loop_exit=True):
   return '(' + ' | '.join([ '(d == %d & offset == %d)' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
 
 def sum_pow2_zeroes(N):
-  cases = [ '__ite(dlt(%s, bit) & !isone(%s,x), pow2(%s), %s)' % (i,i,i,0) for i in range(log2(N)-1) ]
+  cases = [ '__ite((%s < bit) & !isone(%s,x), pow2(%s), %s)' % (i,i,i,0) for i in range(log2(N)-1) ]
   return '(' + ' + \\\n'.join(cases) + ')'
 
 def downsweep_pattern(N,term,identity):
   offsets = [0] + [ 2**i for i in range(log2(N)-1) ]
   xs = range(log2(N))
-  cases = [ '__ite(dlteq(offset, %s), %s, %s)' % (offset,term(x),identity) for offset,x in zip(offsets,xs) ]
+  cases = [ '__ite((offset <= %s), %s, %s)' % (offset,term(x),identity) for offset,x in zip(offsets,xs) ]
   return cases
 
 def downsweep_core(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),0)
-  return '(' + 'result[x] == __ite(isvertex(x,dmul2(offset)), %s, ghostsum[x])' % ' + '.join(cases) + ')'
+  return '(' + 'result[x] == __ite(isvertex(x,mul2(offset)), %s, ghostsum[x])' % ' + '.join(cases) + ')'
 
 def downsweep_nooverflow(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),0)
-  return '(' + '__implies(isvertex(x,dmul2(offset)), rnooverflow_add_%d(%s))' % (log2(N), ', '.join(cases)) + ')'
+  return '(' + '__implies(isvertex(x,mul2(offset)), rnooverflow_add_%d(%s))' % (log2(N), ', '.join(cases)) + ')'
 
 def downsweep_barrier(N):
   ds = [ 2**i for i in range(log2(N)) ]
@@ -79,10 +79,10 @@ def downsweep_barrier(N):
   def gencase(d,offset,rel,aibi):
     idx = '%s_idx(%d,tid)' % (aibi,N/2/d)
     rhs = 'downsweep(offset,result,ghostsum,%s)' % idx
-    return '__implies(dlt(tid, %d) & %s(offset, %d), %s)' % (d,rel,offset,rhs)
-  cases = [     gencase(d,    offset,    'dgteq','ai') for d,offset in zip(ds,offsets) ]
-  cases.append( gencase(ds[0],offsets[0],'dgteq','bi') )
-  cases += [    gencase(d,    offset,    'deq'  ,'bi') for d,offset in zip(ds[1:],offsets[1:]) ]
+    return '__implies((tid < %d) & (offset %s %d), %s)' % (d,rel,offset,rhs)
+  cases = [     gencase(d,    offset,    '>=','ai') for d,offset in zip(ds,offsets) ]
+  cases.append( gencase(ds[0],offsets[0],'>=','bi') )
+  cases += [    gencase(d,    offset,    '=='  ,'bi') for d,offset in zip(ds[1:],offsets[1:]) ]
   return '(' + ' & \\\n  '.join(cases) + ')'
 
 def downsweep_d_offset(N,include_loop_exit=True):
