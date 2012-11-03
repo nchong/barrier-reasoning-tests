@@ -5,7 +5,7 @@
 __axiom(get_local_size(0) == N/2);
 __axiom(get_num_groups(0) == 1);
 
-__kernel void compact(__local unsigned *len) {
+__kernel void prescan(__local unsigned *len) {
   __local unsigned ghostsum[N];
   __local unsigned result[N];
 
@@ -54,8 +54,8 @@ __kernel void compact(__local unsigned *len) {
     __barrier_invariant(downsweep_barrier(tid,offset,result,ghostsum), tid, div2(tid));
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
-      int ai = offset * (2 * t + 1) - 1;
-      int bi = offset * (2 * t + 2) - 1;
+      unsigned ai = offset * (2 * t + 1) - 1;
+      unsigned bi = offset * (2 * t + 2) - 1;
       unsigned temp = result[ai];
       result[ai] = result[bi];
       result[bi] += temp;
