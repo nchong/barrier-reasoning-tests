@@ -1,3 +1,6 @@
+#define N 8
+#include "8_spec.h"
+
 #define __1D_GRID
 #define __1D_WORK_GROUP
 #include "opencl.h"
@@ -11,6 +14,7 @@ __kernel void prescan(__local unsigned *len) {
 
   unsigned t = get_local_id(0);
 
+#if 0
   if (t < N/2) {
     result[2*t]   = len[2*t];
     result[2*t+1] = len[2*t+1];
@@ -62,4 +66,15 @@ __kernel void prescan(__local unsigned *len) {
     }
   }
   __assert(offset == 1);
+#endif
+
+  __assume(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)),
+  __assume(downsweep_barrier(tid,/*offset=*/0,result,ghostsum)),
+
+  // END SPECIFICATION
+  __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), upsweep_instantiation);
+  __barrier_invariant(downsweep_barrier(tid,/*offset=*/0,result,ghostsum), tid, other_tid);
+  barrier(CLK_LOCAL_MEM_FENCE);
+  __assert(result[2*tid] + len[2*tid] == result[2*tid+1]);
+  __assert(__implies(tid < other_tid, result[2*tid+1] + len[2*tid+1] <= result[2*other_tid]));
 }
