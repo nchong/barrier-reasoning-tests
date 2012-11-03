@@ -1,8 +1,3 @@
-#ifndef N
-#define N 4
-#endif
-#include "spec.h"
-
 #define __1D_GRID
 #define __1D_WORK_GROUP
 #include "opencl.h"
@@ -37,6 +32,7 @@ __kernel void compact(__local unsigned *len) {
     }
     offset <<= 1;
   }
+
   __assert(offset == N);
   __assert(upsweep_barrier(tid,/*offset=*/N,result,len)),
   __array_snapshot(ghostsum, result);
@@ -66,5 +62,4 @@ __kernel void compact(__local unsigned *len) {
     }
   }
   __assert(offset == 1);
-
 }

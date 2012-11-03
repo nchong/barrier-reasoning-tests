@@ -1,3 +1,5 @@
+#define __byte_offset(x) (x << 2)
+
 #define div2(x) (x >> 1)
 #define isone(bit,x) (((x >> bit) & 1) == 1)
 #define modpow2(x,y) (x & (y-1))
