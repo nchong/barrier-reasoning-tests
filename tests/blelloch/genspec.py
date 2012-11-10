@@ -30,7 +30,7 @@ def upsweep_core(N):
   return upsweep_pattern(N, lambda terms: 'result[x] == %s' % ' + '.join(terms))
 
 def upsweep_nooverflow(N):
-  return upsweep_pattern(N, lambda terms: 'rnooverflow_add_%d(%s)' % (len(terms), ', '.join(terms)))
+  return upsweep_pattern(N, lambda terms: '__add_noovfl_%d(%s)' % (len(terms), ', '.join(terms)))
 
 def upsweep_barrier(N):
   cases = []
@@ -71,7 +71,7 @@ def downsweep_core(N):
 
 def downsweep_nooverflow(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),0)
-  return '(' + '__implies(isvertex(x,mul2(offset)), rnooverflow_add_%d(%s))' % (log2(N), ', '.join(cases)) + ')'
+  return '(' + '__implies(isvertex(x,mul2(offset)), __add_noovfl_%d(%s))' % (log2(N), ', '.join(cases)) + ')'
 
 def downsweep_barrier(N):
   ds = [ 2**i for i in range(log2(N)) ]
