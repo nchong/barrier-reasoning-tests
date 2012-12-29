@@ -4,23 +4,26 @@
 
 #define raddf(x,y) (x + y)
 
+#define DTYPE unsigned
+#define RTYPE unsigned char
+
 __axiom(get_local_size(0) == N/2);
 __axiom(get_num_groups(0) == 1);
 
-__kernel void prescan(__local unsigned *len) {
-  __local unsigned ghostsum[N];
-  __local unsigned result[N];
+__kernel void prescan(__local RTYPE *len) {
+  __local RTYPE ghostsum[N];
+  __local RTYPE result[N];
 
-  unsigned t = get_local_id(0);
+  DTYPE t = get_local_id(0);
 
   if (t < N/2) {
     result[2*t]   = len[2*t];
     result[2*t+1] = len[2*t+1];
   }
 
-  unsigned offset = 1;
+  DTYPE offset = 1;
   for (
-    unsigned d=N/2;
+    DTYPE d=N/2;
     __invariant(upsweep_d_offset),
     __invariant(upsweep_barrier(tid,offset,result,len)),
     d > 0;
@@ -28,8 +31,8 @@ __kernel void prescan(__local unsigned *len) {
     __barrier_invariant(upsweep_barrier(tid,offset,result,len), tid, 2*tid, 2*tid+1);
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
-      unsigned ai = offset * (2 * t + 1) - 1;
-      unsigned bi = offset * (2 * t + 2) - 1;
+      DTYPE ai = offset * (2 * t + 1) - 1;
+      DTYPE bi = offset * (2 * t + 2) - 1;
       result[bi] += result[ai];
     }
     offset <<= 1;
@@ -45,7 +48,7 @@ __kernel void prescan(__local unsigned *len) {
   }
 
   for (
-    unsigned d = 1;
+    DTYPE d = 1;
     __invariant(downsweep_d_offset),
     __invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)),
     __invariant(downsweep_barrier(tid,div2(offset),result,ghostsum)),
@@ -56,9 +59,9 @@ __kernel void prescan(__local unsigned *len) {
     __barrier_invariant(downsweep_barrier(tid,offset,result,ghostsum), tid, div2(tid));
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
-      unsigned ai = offset * (2 * t + 1) - 1;
-      unsigned bi = offset * (2 * t + 2) - 1;
-      unsigned temp = result[ai];
+      DTYPE ai = offset * (2 * t + 1) - 1;
+      DTYPE bi = offset * (2 * t + 2) - 1;
+      RTYPE temp = result[ai];
       result[ai] = result[bi];
       result[bi] += temp;
     }
