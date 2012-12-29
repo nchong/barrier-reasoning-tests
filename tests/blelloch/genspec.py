@@ -27,7 +27,7 @@ def upsweep_pattern(N,rhs):
   return '(' + ' & \\\n  '.join(body) + ')'
 
 def upsweep_core(N):
-  return upsweep_pattern(N, lambda terms: 'result[x] == %s' % ' + '.join(terms))
+  return upsweep_pattern(N, lambda terms: 'result[x] == %s' % summation(reversed(terms), 'raddf'))
 
 def upsweep_nooverflow(N):
   return upsweep_pattern(N, lambda terms: '__add_noovfl_%d(%s)' % (len(terms), ', '.join(terms)))
@@ -62,12 +62,12 @@ def sum_pow2_zeroes(N):
 def downsweep_pattern(N,term,identity):
   offsets = [0] + [ 2**i for i in range(log2(N)-1) ]
   xs = range(log2(N))
-  cases = [ '__ite((offset <= %s), %s, %s)' % (offset,term(x),identity) for offset,x in zip(offsets,xs) ]
+  cases = [ '__ite((offset <= %s), %s, %s)' % (offset,term(x),identity) for offset,x in reversed(zip(offsets,xs)) ]
   return cases
 
 def downsweep_core(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),0)
-  return '(' + 'result[x] == __ite(isvertex(x,mul2(offset)), %s, ghostsum[x])' % ' + '.join(cases) + ')'
+  return '(' + 'result[x] == __ite(isvertex(x,mul2(offset)), %s, ghostsum[x])' % summation(cases, 'raddf') + ')'
 
 def downsweep_nooverflow(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),0)

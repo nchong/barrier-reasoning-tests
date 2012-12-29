@@ -2,6 +2,8 @@
 #define __1D_WORK_GROUP
 #include "opencl.h"
 
+#define raddf(x,y) (x + y)
+
 __axiom(get_local_size(0) == N/2);
 __axiom(get_num_groups(0) == 1);
 
