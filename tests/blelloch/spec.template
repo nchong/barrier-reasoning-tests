@@ -1,5 +1,4 @@
 #define N {{N}}
-#define __byte_offset(x) (x << 2)
 
 #define div2(x) (x >> 1)
 #define iseven(x) ((x & 1) == 0)
