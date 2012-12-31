@@ -1,4 +1,36 @@
-#define N {{N}}
+// ---------------------------------------------------------------------------
+// PARAMETERS
+// ---------------------------------------------------------------------------
+#if N != {{N}}
+  #error This specification is only valid when N={{N}}
+#endif
+
+#ifndef dtype
+  #error dtype must be defined
+#endif
+
+#ifndef rtype
+  #error rtype must be defined
+#endif
+
+#if (!defined(CONCRETE_ADD) && !defined(ABSTRACT_ADD)) || \
+    ( defined(CONCRETE_ADD) &&  defined(ABSTRACT_ADD))
+  #error Exactly one of CONCRETE_ADD or ABSTRACT_ADD must be defined
+#endif
+#ifdef CONCRETE_ADD
+  #define raddf(x,y) (x + y)
+  #define raddf_primed(x,y) (x + y)
+#endif
+#ifdef ABSTRACT_ADD
+  #define raddf(x,y) __add_abstract(x,y)
+  #define raddf_primed(x,y) __add_abstract_primed(x,y)
+#endif
+
+// ---------------------------------------------------------------------------
+// HELPERS
+// ---------------------------------------------------------------------------
+#define __ite_wrapper(ty) __concatenate(__ite_,ty)
+#define __ite(b,x,y) __ite_wrapper(rtype)(b,x,y)
 
 #define div2(x) (x >> 1)
 #define iseven(x) ((x & 1) == 0)
