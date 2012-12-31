@@ -34,14 +34,16 @@ __kernel void prescan(__local rtype *len) {
   __local rtype ghostsum[N];
   __local rtype result[N];
 
+  dtype offset;
   dtype t = get_local_id(0);
 
+#ifdef INC_UPSWEEP
   if (t < N/2) {
     result[2*t]   = len[2*t];
     result[2*t+1] = len[2*t+1];
   }
 
-  dtype offset = 1;
+  offset = 1;
   for (
     dtype d=N/2;
     __invariant(upsweep_d_offset),
@@ -59,10 +61,15 @@ __kernel void prescan(__local rtype *len) {
   }
 
   __assert(offset == N);
-//__assert(upsweep_barrier(tid,/*offset=*/N,result,len)),
+  __assert(upsweep_barrier(tid,/*offset=*/N,result,len));
+#elif INC_DOWNSWEEP
+  offset = N;
+  __assume(upsweep_barrier(tid,/*offset=*/N,result,len));
   __array_snapshot(ghostsum, result);
-//__assert(upsweep_barrier(tid,/*offset=*/N,ghostsum,len));
+  __assert(upsweep_barrier(tid,/*offset=*/N,ghostsum,len));
+#endif
 
+#ifdef INC_DOWNSWEEP
   if (t == 0) {
     result[N-1] = 0;
   }
@@ -87,8 +94,12 @@ __kernel void prescan(__local rtype *len) {
     }
   }
   __assert(offset == 1);
+#elif INC_ENDSPEC
+  __assume(upsweep_barrier(tid,/*offset=*/N,ghostsum,len));
+  __assume(downsweep_barrier(tid,/*offset=*/0,result,ghostsum));
+#endif
 
-#if 0
+#ifdef INC_ENDSPEC
   // END SPECIFICATION
   __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), upsweep_instantiation);
   __barrier_invariant(downsweep_barrier(tid,/*offset=*/0,result,ghostsum), tid, other_tid);
