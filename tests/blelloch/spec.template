@@ -108,5 +108,11 @@
 // ---------------------------------------------------------------------------
 // END SPECIFICATION
 // ---------------------------------------------------------------------------
+#define final_upsweep_barrier(tid,result,len) \
+  {{final_upsweep_barrier(N)}}
+
+#define final_downsweep_barrier(tid,result,len) \
+  {{final_downsweep_barrier(N)}}
+
 #define upsweep_instantiation \
   {{upsweep_instantiation(N)}}

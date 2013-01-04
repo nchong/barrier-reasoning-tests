@@ -100,6 +100,30 @@ def upsweep_instantiation(N):
   cases.append('other_tid')
   return ', '.join(cases)
 
+def final_upsweep_barrier(N):
+  cases = []
+  def gencase(d,aibi):
+    idx = '%s_idx(%d,tid)' % (aibi,N/2/d)
+    rhs = 'upsweep(/*offset=*/N,result,len,%s)' % idx
+    return '__implies((tid < %d), %s)' % (d,rhs)
+  ds = [ 2**i for i in reversed(range(log2(N)-1)) ]
+  offsets = [ 2**i for i in range(2,log2(N)+1) ]
+  assert len(ds) == len(offsets)
+  cases.append( gencase(N/2,'ai') )
+  cases += [    gencase(d,'ai') for d,offset in zip(ds,offsets) ]
+  cases.append( gencase(1,'bi') )
+  return '(' + ' & \\\n  '.join(cases) + ')'
+
+def final_downsweep_barrier(N):
+  cases = []
+  def gencase(d,aibi):
+    idx = '%s_idx(%d,tid)' % (aibi,N/2/d)
+    rhs = 'downsweep(/*offset=*/0,result,ghostsum,%s)' % idx
+    return '__implies((tid < %d), %s)' % (d,rhs)
+  cases.append( gencase(N/2,'ai') )
+  cases.append( gencase(N/2,'bi') )
+  return '(' + ' & \\\n  '.join(cases) + ')'
+
 def main(argv=None):
   if argv is None:
     argv = sys.argv
@@ -121,6 +145,8 @@ def main(argv=None):
     downsweep_barrier=downsweep_barrier,
     downsweep_d_offset=downsweep_d_offset,
     upsweep_instantiation=upsweep_instantiation,
+    final_upsweep_barrier=final_upsweep_barrier,
+    final_downsweep_barrier=final_downsweep_barrier,
   )
 
 if __name__ == '__main__':
