@@ -30,7 +30,7 @@ def upsweep_core(N):
   return upsweep_pattern(N, lambda terms: 'result[x] == %s' % summation(reversed(terms), 'raddf'))
 
 def upsweep_nooverflow(N):
-  return upsweep_pattern(N, lambda terms: '__add_noovfl_%d(%s)' % (len(terms), ', '.join(terms)))
+  return upsweep_pattern(N, lambda terms: '__add_noovfl(%s)' % ', '.join(terms))
 
 def upsweep_barrier(N):
   cases = []
