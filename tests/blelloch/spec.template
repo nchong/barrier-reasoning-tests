@@ -31,6 +31,8 @@
 // ---------------------------------------------------------------------------
 #define __ite_wrapper(ty) __concatenate(__ite_,ty)
 #define __ite(b,x,y) __ite_wrapper(rtype)(b,x,y)
+#define __non_temporal(x) \
+  __non_temporal_loads_begin(), x, __non_temporal_loads_end()
 
 #define div2(x) (x >> 1)
 #define iseven(x) ((x & 1) == 0)

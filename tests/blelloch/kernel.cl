@@ -61,12 +61,12 @@ __kernel void prescan(__local rtype *len) {
   }
 
   __assert(offset == N);
-  __assert(upsweep_barrier(tid,/*offset=*/N,result,len));
+  __non_temporal(__assert(upsweep_barrier(tid,/*offset=*/N,result,len)));
 #elif INC_DOWNSWEEP
   offset = N;
   __assume(upsweep_barrier(tid,/*offset=*/N,result,len));
   __array_snapshot(ghostsum, result);
-  __assert(upsweep_barrier(tid,/*offset=*/N,ghostsum,len));
+  __non_temporal(__assert(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)));
 #endif
 
 #ifdef INC_DOWNSWEEP
@@ -103,7 +103,7 @@ __kernel void prescan(__local rtype *len) {
   __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
   __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), tid, other_tid);
   barrier(CLK_LOCAL_MEM_FENCE);
-  __assert(raddf(result[2*tid], len[2*tid]) == result[2*tid+1]);
-  __assert(__implies(tid < other_tid, raddf(result[2*tid+1], len[2*tid+1]) <= result[2*other_tid]));
+  __non_temporal(__assert(raddf(result[2*tid], len[2*tid]) == result[2*tid+1]));
+  __non_temporal(__assert(__implies(tid < other_tid, raddf(result[2*tid+1], len[2*tid+1]) <= result[2*other_tid])));
 #endif
 }
