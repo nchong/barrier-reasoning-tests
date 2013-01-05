@@ -74,7 +74,7 @@ def downsweep_core(N):
 
 def downsweep_nooverflow(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),0)
-  return '(' + '__implies(isvertex(x,mul2(offset)), __add_noovfl_%d(%s))' % (log2(N), ', '.join(cases)) + ')'
+  return '(' + '__implies(isvertex(x,mul2(offset)), __add_noovfl(%s))' % ', '.join(cases) + ')'
 
 def downsweep_barrier(N):
   ds = [ 2**i for i in range(log2(N)) ]
