@@ -100,8 +100,8 @@ __kernel void prescan(__local rtype *len) {
 #endif
 
 #ifdef INC_ENDSPEC
-  __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), upsweep_instantiation);
-  __barrier_invariant(downsweep_barrier(tid,/*offset=*/0,result,ghostsum), tid, other_tid);
+  __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
+  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), tid, other_tid);
   barrier(CLK_LOCAL_MEM_FENCE);
   __assert(raddf(result[2*tid], len[2*tid]) == result[2*tid+1]);
   __assert(__implies(tid < other_tid, raddf(result[2*tid+1], len[2*tid+1]) <= result[2*other_tid]));
