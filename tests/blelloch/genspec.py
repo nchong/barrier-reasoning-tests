@@ -10,6 +10,9 @@ except ImportError:
   print 'http://jinja.pocoo.org/docs/intro/#installation'
   exit(-1)
 
+def ispow2(x):
+  return x != 0 and ((x & (x-1)) == 0)
+
 def log2(x):
   return int(log(x,2))
 
@@ -132,6 +135,9 @@ def main(argv=None):
     print 'error: need [N], number of elements'
     return 1
   N = int(argv[1])
+  if not ispow2(N):
+    print 'error: [N] must be a power of two'
+    return 1
   env = Environment(loader=PackageLoader('genspec', '.'))
   t = env.get_template('spec.template')
   print t.render(N=N, NDIV2=N/2,
