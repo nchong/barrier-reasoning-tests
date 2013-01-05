@@ -100,7 +100,6 @@ __kernel void prescan(__local rtype *len) {
 #endif
 
 #ifdef INC_ENDSPEC
-  // END SPECIFICATION
   __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), upsweep_instantiation);
   __barrier_invariant(downsweep_barrier(tid,/*offset=*/0,result,ghostsum), tid, other_tid);
   barrier(CLK_LOCAL_MEM_FENCE);
