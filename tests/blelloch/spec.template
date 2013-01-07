@@ -13,17 +13,24 @@
   #error rtype must be defined
 #endif
 
-#if (!defined(CONCRETE_ADD) && !defined(ABSTRACT_ADD)) || \
-    ( defined(CONCRETE_ADD) &&  defined(ABSTRACT_ADD))
-  #error Exactly one of CONCRETE_ADD or ABSTRACT_ADD must be defined
-#endif
-#ifdef CONCRETE_ADD
+#if defined(BINOP_ADD)
   #define raddf(x,y) (x + y)
   #define raddf_primed(x,y) (x + y)
-#endif
-#ifdef ABSTRACT_ADD
+  #define ridentity 0
+#elif defined(BINOP_OR)
+  #define raddf(x,y) (x | y)
+  #define raddf_primed(x,y) (x | y)
+  #define ridentity 0
+#elif defined(BINOP_MAX)
+  #define raddf(x,y) __ite(x < y, y, x)
+  #define raddf_primed(x,y) __ite(x < y, y, x)
+  #define ridentity 0
+#elif defined(BINOP_ABSTRACT)
   #define raddf(x,y) __add_abstract(x,y)
   #define raddf_primed(x,y) __add_abstract_primed(x,y)
+  #define ridentity 0
+#else
+  #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT must be defined
 #endif
 
 // ---------------------------------------------------------------------------
@@ -60,7 +67,7 @@
 #define upsweep_core(offset,result,len,x) \
   {{upsweep_core(N)}}
 
-#if 0
+#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
 #define upsweep_nooverflow(offset,result,len,x) \
   {{upsweep_nooverflow(N)}}
 
@@ -83,14 +90,13 @@
 #define sum_pow2_zeroes(bit,x) \
   {{sum_pow2_zeroes(N)}}
 
-#define term(ghostsum,bit,x)                                   \
-  __ite(!isone(bit,x), 0,                                      \
-  ghostsum[x + sum_pow2_zeroes(bit,x) - pow2(bit)])
+#define term(ghostsum,bit,x) \
+  __ite(!isone(bit,x), 0, ghostsum[x + sum_pow2_zeroes(bit,x) - pow2(bit)])
 
 #define downsweep_core(offset,result,ghostsum,x) \
   {{downsweep_core(N)}}
 
-#if 0
+#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
 #define downsweep_nooverflow(offset,result,ghostsum,x) \
   {{downsweep_nooverflow(N)}}
 

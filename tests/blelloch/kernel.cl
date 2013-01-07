@@ -71,7 +71,7 @@ __kernel void prescan(__local rtype *len) {
 
 #ifdef INC_DOWNSWEEP
   if (t == 0) {
-    result[N-1] = 0;
+    result[N-1] = ridentity;
   }
 
   for (

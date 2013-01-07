@@ -69,11 +69,11 @@ def downsweep_pattern(N,term,identity):
   return cases
 
 def downsweep_core(N):
-  cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),0)
+  cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),'ridentity')
   return '(' + 'result[x] == __ite(isvertex(x,mul2(offset)), %s, ghostsum[x])' % summation(cases, 'raddf') + ')'
 
 def downsweep_nooverflow(N):
-  cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),0)
+  cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),'ridentity')
   return '(' + '__implies(isvertex(x,mul2(offset)), __add_noovfl(%s))' % ', '.join(cases) + ')'
 
 def downsweep_barrier(N):
