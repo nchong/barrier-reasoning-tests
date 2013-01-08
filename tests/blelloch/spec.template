@@ -116,11 +116,18 @@
 // ---------------------------------------------------------------------------
 // END SPECIFICATION
 // ---------------------------------------------------------------------------
+#define x2t(x) __ite_wrapper(dtype)(iseven(x), div2(x), div2((x-1)))
+
 #define final_upsweep_barrier(tid,result,len) \
   {{final_upsweep_barrier(N)}}
 
 #define final_downsweep_barrier(tid,result,len) \
   {{final_downsweep_barrier(N)}}
 
+#if defined(SPEC_THREADWISE)
 #define upsweep_instantiation \
   {{upsweep_instantiation(N)}}
+#elif defined(SPEC_ELEMENTWISE)
+#define upsweep_instantiation \
+  {{upsweep_instantiation(N,elementwise=True)}}
+#endif

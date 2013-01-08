@@ -27,7 +27,11 @@
 #define __spec_h(N) __concatenate(N, _spec.h)
 #include __stringify(__spec_h(N))
 
+#ifdef SPEC_ELEMENTWISE
+__axiom(get_local_size(0) == N);
+#else
 __axiom(get_local_size(0) == N/2);
+#endif
 __axiom(get_num_groups(0) == 1);
 
 __kernel void prescan(__local rtype *len) {
@@ -100,10 +104,19 @@ __kernel void prescan(__local rtype *len) {
 #endif
 
 #ifdef INC_ENDSPEC
+#if defined(SPEC_THREADWISE)
   __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
   __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), tid, other_tid);
   barrier(CLK_LOCAL_MEM_FENCE);
   __non_temporal(__assert(raddf(result[2*tid], len[2*tid]) == result[2*tid+1]));
   __non_temporal(__assert(__implies(tid < other_tid, raddf(result[2*tid+1], len[2*tid+1]) <= result[2*other_tid])));
+#elif defined(SPEC_ELEMENTWISE)
+  __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
+  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), x2t(tid), x2t(other_tid));
+  barrier(CLK_LOCAL_MEM_FENCE);
+  __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) <= result[other_tid])));
+#else
+  #error SPEC_THREADWISE|SPEC_ELEMENTWISE must be defined
+#endif
 #endif
 }

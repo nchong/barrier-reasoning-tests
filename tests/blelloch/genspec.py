@@ -95,12 +95,13 @@ def downsweep_d_offset(N,include_loop_exit=True):
   offsets = [x for x in reversed(ds)]
   return '(' + ' | '.join([ '(d == %s & offset == %s)' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
 
-def upsweep_instantiation(N):
+def upsweep_instantiation(N,elementwise=False):
   cases = [ 'tid' ]
   for x in range(1,log2(N)-1):
     term = 'div2(%s)' % cases[-1]
     cases.append(term)
   cases.append('other_tid')
+  if elementwise: cases = [ 'x2t(%s)' % x for x in cases ]
   return ', '.join(cases)
 
 def final_upsweep_barrier(N):
