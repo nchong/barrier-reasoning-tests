@@ -1,7 +1,8 @@
 TOP := $(dir $(lastword $(MAKEFILE_LIST)))
 
 CXX=gklee-nvcc
+EXTRA_CXX_FLAGS?=
 
 $(PROG): $(PROG).cu
-	gklee-nvcc $< 2> $@.build.out
+	gklee-nvcc $(EXTRA_CXX_FLAGS) $< 2> $@.build.out
 	@echo "run gklee $(PROG) or gklee --symbolic-config $(PROG)"
