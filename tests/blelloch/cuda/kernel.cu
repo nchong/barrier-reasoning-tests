@@ -55,7 +55,13 @@ int main(int argc, char **argv) {
   size_t ArraySize = N * sizeof(unsigned);
   unsigned *in  = (unsigned *)malloc(ArraySize);
   unsigned *out = (unsigned *)malloc(ArraySize);
+#ifdef _SYM
   klee_make_symbolic(in, ArraySize, "in");
+#else
+  for (unsigned i=0; i<N; ++i) {
+    in[i] = i+1;
+  }
+#endif
 
   // create arrays on device
   unsigned *d_in;
@@ -73,6 +79,11 @@ int main(int argc, char **argv) {
   cudaMemcpy(out, d_out, ArraySize, cudaMemcpyDeviceToHost);
 
   // check specification
+#ifndef _SYM
+  for (unsigned i=0; i<N; ++i) {
+    printf("out[%d] = %d\n", i, out[i]);
+  }
+#endif
   for (unsigned i=0; i<(N-1); ++i) {
     assert(out[i] + in[i] <= out[i+1] && "SPEC FAILED");
   }
