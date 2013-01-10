@@ -59,7 +59,11 @@ __kernel void prescan(__local rtype *len) {
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
+#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+      result[bi] = __add_noovfl_unsigned(result[ai], result[bi]);
+#else
       result[bi] = raddf_primed(result[ai], result[bi]);
+#endif
     }
     offset <<= 1;
   }
@@ -69,11 +73,12 @@ __kernel void prescan(__local rtype *len) {
 #elif INC_DOWNSWEEP
   offset = N;
   __assume(upsweep_barrier(tid,/*offset=*/N,result,len));
-  __array_snapshot(ghostsum, result);
 //__non_temporal(__assert(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)));
 #endif
 
 #ifdef INC_DOWNSWEEP
+  __array_snapshot(ghostsum, result);
+
   if (t == 0) {
     result[N-1] = ridentity;
   }
@@ -94,7 +99,13 @@ __kernel void prescan(__local rtype *len) {
       dtype bi = offset * (2 * t + 2) - 1;
       rtype temp = result[ai];
       result[ai] = result[bi];
+#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+      // TODO: should make this call dependent on rtype
+      // invariants will fail if rtype != uint
+      result[bi] = __add_noovfl_unsigned(result[bi], temp);
+#else
       result[bi] = raddf(result[bi], temp);
+#endif
     }
   }
 //__assert(offset == 1);
