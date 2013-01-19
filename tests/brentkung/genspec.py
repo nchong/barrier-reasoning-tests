@@ -60,7 +60,7 @@ def upsweep_d_offset(N, include_loop_exit=True):
 def foldright(f,xs,i):
   return reduce(lambda x,y: f(y,x), reversed(xs),i)
 
-def ilog2(N,):
+def ilog2(N):
   def gencase(i):
     return '__ite((%d <= x) & (x < %d), %s' % (2**i, 2**(i+1), i)
   cases = [ '__ite(x == 1, 0' ]

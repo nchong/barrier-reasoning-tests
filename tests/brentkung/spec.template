@@ -1,0 +1,121 @@
+// ---------------------------------------------------------------------------
+// PARAMETERS
+// ---------------------------------------------------------------------------
+#if N != {{N}}
+  #error This specification is only valid when N={{N}}
+#endif
+
+#ifndef dtype
+  #error dtype must be defined
+#endif
+
+#ifndef rtype
+  #error rtype must be defined
+#endif
+
+#define __ite_wrapper(ty) __concatenate(__ite_,ty)
+#define __ite(b,x,y) __ite_wrapper(rtype)(b,x,y)
+
+#if defined(BINOP_ADD)
+  #define raddf(x,y) (x + y)
+  #define raddf_primed(x,y) (x + y)
+  #define ridentity 0
+#elif defined(BINOP_OR)
+  #define raddf(x,y) (x | y)
+  #define raddf_primed(x,y) (x | y)
+  #define ridentity 0
+#elif defined(BINOP_MAX)
+  #define raddf(x,y) __ite(x < y, y, x)
+  #define raddf_primed(x,y) __ite(x < y, y, x)
+  #define ridentity 0
+#elif defined(BINOP_ABSTRACT)
+  #define raddf(x,y) __add_abstract(x,y)
+  #define raddf_primed(x,y) __add_abstract_primed(x,y)
+  #define ridentity 0
+#else
+  #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT must be defined
+#endif
+
+// ---------------------------------------------------------------------------
+// HELPERS
+// ---------------------------------------------------------------------------
+#define __non_temporal(x) \
+  __non_temporal_loads_begin(), x, __non_temporal_loads_end()
+
+#define div2(x) (x >> 1)
+#define iseven(x) ((x & 1) == 0)
+#define isone(bit,x) (((x >> bit) & 1) == 1)
+#define modpow2(x,y) (x & (y-1))
+#define mul2(x) (x << 1)
+#define mul2add1(x) (mul2(x) | 1)
+#define pow2(bit) (1 << bit)
+
+#define tid get_local_id(0)
+#define other_tid __other_int(tid)
+
+#define isvertex(x,offset) ((offset == 0) | (modpow2(x+1,offset) == 0))
+#define stopped(x,offset) isvertex(x+offset, mul2(offset))
+#define left(x,offset) (x - div2(offset))
+#define updated(x,offset) ((offset < x) & isvertex((x-offset), mul2(offset)))
+#define iselement(x)  ((0 < x) & (x < {{N}}))
+#define isthreadid(t) ((0 < t) & (t < {{NDIV2}}))
+
+#define ai_idx(offset,tid) ((offset * mul2add1(tid)) - 1)
+#define bi_idx(offset,tid) ((offset * (mul2(tid)+2)) - 1)
+
+#define lf_ai_idx(offset,tid) ((offset * (tid + 1)) - 1)
+#define lf_bi_idx(offset,tid) (lf_ai_idx(offset,tid) + (offset >> 1))
+
+#define lf_ai_tid(tid) __ite(tid == 0, 0, __ite(iseven(tid), 0, 0))
+#define lf_bi_tid(tid) (tid+1)
+
+// ---------------------------------------------------------------------------
+// UPSWEEP INVARIANTS
+// ---------------------------------------------------------------------------
+#define upsweep_core(offset,result,len,x) \
+  {{upsweep_core(N)}}
+
+#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+#define upsweep_nooverflow(offset,result,len,x) \
+  {{upsweep_nooverflow(N)}}
+
+#define upsweep(offset,result,len,x) \
+  (upsweep_core(offset,result,len,x) & upsweep_nooverflow(offset,result,len,x))
+#else
+#define upsweep(offset,result,len,x) \
+  upsweep_core(offset,result,len,x)
+#endif
+
+#define upsweep_barrier(tid,offset,result,len) \
+  {{upsweep_barrier(N)}}
+
+#define upsweep_d_offset \
+  {{upsweep_d_offset(N)}}
+
+// ---------------------------------------------------------------------------
+// DOWNSWEEP INVARIANTS
+// ---------------------------------------------------------------------------
+#define ilog2(x) \
+  {{ilog2(N)}}
+
+#define term(x,i) \
+  {{downsweep_term(N)}}
+
+#define downsweep_summation(result,ghostsum,x) \
+  {{downsweep_summation(N)}}
+
+#define downsweep_core(offset,result,ghostsum,x) \
+  {{downsweep_core(N)}}
+
+#define downsweep(offset,result,ghostsum,x) \
+  downsweep_core(offset,result,ghostsum,x)
+
+#define downsweep_barrier(tid,offset,result,ghostsum) \
+  {{downsweep_barrier(N)}}
+
+#define downsweep_d_offset \
+  {{downsweep_d_offset(N)}}
+
+// ---------------------------------------------------------------------------
+// END SPECIFICATION
+// ---------------------------------------------------------------------------

@@ -1,22 +1,42 @@
-#define __1D_GRID
-#define __1D_WORK_GROUP
-#include "opencl.h"
+/*
+ * Brent-Kung inclusive prefix sum in OpenCL
+ */
 
-__axiom(get_local_size(0) == N/2);
-__axiom(get_num_groups(0) == 1);
+// number of elements
+#ifndef N
+#error N must be defined
+#endif
+
+// control-plane
+#ifndef dtype
+#define dtype uint
+#endif
+
+// data-plane
+#ifndef rtype
+#define rtype uint
+#endif
+
+// specification header
+#define __stringify_inner(x) #x
+#define __stringify(x) __stringify_inner(x)
+#define __spec_h(N) __concatenate(N, _spec.h)
+#include __stringify(__spec_h(N))
 
 __kernel void scan(__local unsigned *len) {
   __local unsigned ghostsum[N];
   __local unsigned result[N];
 
+  unsigned offset;
   unsigned t = get_local_id(0);
 
+#ifdef INC_UPSWEEP
   if (t < N/2) {
     result[2*t]   = len[2*t];
     result[2*t+1] = len[2*t+1];
   }
 
-  unsigned offset = 1;
+  offset = 1;
   for (
     unsigned d=N/2;
     __invariant(upsweep_d_offset),
@@ -32,11 +52,13 @@ __kernel void scan(__local unsigned *len) {
     }
     offset <<= 1;
   }
+#elif INC_DOWNSWEEP
+  offset = N;
+  __assume(upsweep_barrier(tid,/*offset=*/N,result,len));
+#endif
 
-  __assert(offset == N);
-  __assert(upsweep_barrier(tid,/*offset=*/N,result,len)),
+#ifdef INC_DOWNSWEEP
   __array_snapshot(ghostsum, result);
-  __assert(upsweep_barrier(tid,/*offset=*/N,ghostsum,len));
 
   for (
     unsigned d = 2;
@@ -55,5 +77,5 @@ __kernel void scan(__local unsigned *len) {
       result[bi] += result[ai];
     }
   }
-  __assert(offset == 2);
+#endif
 }
