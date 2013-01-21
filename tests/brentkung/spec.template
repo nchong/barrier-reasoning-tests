@@ -64,9 +64,9 @@
 #define bi_idx(offset,tid) ((offset * (mul2(tid)+2)) - 1)
 
 #define lf_ai_idx(offset,tid) ((offset * (tid + 1)) - 1)
-#define lf_bi_idx(offset,tid) (lf_ai_idx(offset,tid) + (offset >> 1))
+#define lf_bi_idx(offset,tid) (lf_ai_idx(offset,tid) + div2(offset))
 
-#define lf_ai_tid(tid) __ite(tid == 0, 0, __ite(iseven(tid), 0, 0))
+#define lf_ai_tid(tid) __ite(tid == 0, 0, __ite(iseven(tid), (div2(tid)-1), (div2((tid-1)))))
 #define lf_bi_tid(tid) (tid+1)
 
 // ---------------------------------------------------------------------------

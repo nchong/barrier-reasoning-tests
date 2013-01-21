@@ -10,6 +10,9 @@ except ImportError:
   print 'http://jinja.pocoo.org/docs/intro/#installation'
   exit(-1)
 
+def ispow2(x):
+  return x != 0 and ((x & (x-1)) == 0)
+
 def log2(x):
   return int(log(x,2))
 
@@ -27,10 +30,10 @@ def upsweep_pattern(N,rhs):
   return '(' + ' & \\\n  '.join(body) + ')'
 
 def upsweep_core(N):
-  return upsweep_pattern(N, lambda terms: 'result[x] == %s' % ' + '.join(terms))
+  return upsweep_pattern(N, lambda terms: 'result[x] == %s' % summation(reversed(terms), 'raddf'))
 
 def upsweep_nooverflow(N):
-  return upsweep_pattern(N, lambda terms: 'rnooverflow_add_%d(%s)' % (len(terms), ', '.join(terms)))
+  return upsweep_pattern(N, lambda terms: '__add_noovfl(%s)' % ', '.join(terms))
 
 def upsweep_barrier(N):
   cases = []
@@ -55,8 +58,6 @@ def upsweep_d_offset(N, include_loop_exit=True):
     ds += [0]
   return '(' + ' | '.join([ '(d == %d & offset == %d)' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
 
-#----
-
 def foldright(f,xs,i):
   return reduce(lambda x,y: f(y,x), reversed(xs),i)
 
@@ -69,20 +70,20 @@ def ilog2(N):
 
 def downsweep_term(N):
   def gencase(i):
-    return '__ite((%d <= i) & isone(%d, (x+%d)), 1, 0)' % (i,i,2**i)
+    return '__ite((%d <= i) & isone(%d, (x+1)), %d, 0)' % (i,i,2**i)
   cases = [ gencase(i) for i in range(log2(N)-1) ]
   return '(x - (%s))' % ' + '.join(cases)
 
 def downsweep_terms_pattern(N,term,identity):
   def gencase(i):
     return '__ite(isone(%d,(x+1)) & (%d < ilog2(x+1)), %s, %s)' % (i,i,term(i),identity)
-  return [ gencase(i) for i in range(log2(N)-1) ]
+  return [ gencase(i) for i in reversed(range(log2(N)-1)) ]
 
 def downsweep_summation(N):
   def term(x): return 'ghostsum[term(x,%s)]' % x
-  cases = [ 'ghostsum[x]' ]
-  cases.extend(downsweep_terms_pattern(N,term,0))
-  return '(result[x] == (%s))' % ' + '.join(cases)
+  cases = downsweep_terms_pattern(N,term,0)
+  cases.append('ghostsum[x]')
+  return '(result[x] == (%s))' % summation(cases, 'raddf')
 
 def downsweep_updated_condition(N):
   def gencase(i):
@@ -140,6 +141,9 @@ def main(argv=None):
     print 'error: need [N], number of elements'
     return 1
   N = int(argv[1])
+  if not ispow2(N):
+    print 'error: [N] must be a power of two'
+    return 1
   env = Environment(loader=PackageLoader('genspec', '.'))
   t = env.get_template('spec.template')
   print t.render(N=N, NDIV2=N/2,
