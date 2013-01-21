@@ -71,7 +71,6 @@ __kernel void scan(__local unsigned *len) {
     __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), tid);
     __barrier_invariant(downsweep_barrier(tid,mul2(offset),result,ghostsum), tid, lf_ai_tid(tid), lf_bi_tid(tid)),
     barrier(CLK_LOCAL_MEM_FENCE);
-    __assert(((d == 2) & (offset == 4)) | ((d == 4) & (offset == 2)));
     if (t < (d - 1)) {
       unsigned ai = (offset * (t + 1)) - 1;
       unsigned bi = ai + (offset >> 1);
