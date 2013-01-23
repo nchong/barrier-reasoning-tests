@@ -2,10 +2,6 @@
  * Blelloch exclusive prefix sum in OpenCL
  */
 
-#define __1D_GRID
-#define __1D_WORK_GROUP
-#include "opencl.h"
-
 // number of elements
 #ifndef N
 #error N must be defined
@@ -26,13 +22,6 @@
 #define __stringify(x) __stringify_inner(x)
 #define __spec_h(N) __concatenate(N, _spec.h)
 #include __stringify(__spec_h(N))
-
-#ifdef SPEC_ELEMENTWISE
-__axiom(get_local_size(0) == N);
-#else
-__axiom(get_local_size(0) == N/2);
-#endif
-__axiom(get_num_groups(0) == 1);
 
 __kernel void prescan(__local rtype *len) {
   __local rtype ghostsum[N];
@@ -129,5 +118,9 @@ __kernel void prescan(__local rtype *len) {
 #else
   #error SPEC_THREADWISE|SPEC_ELEMENTWISE must be defined
 #endif
+#endif
+
+#ifdef FORCE_FAIL
+  __assert(false);
 #endif
 }
