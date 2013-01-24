@@ -107,8 +107,16 @@
 #define downsweep_core(offset,result,ghostsum,x) \
   {{downsweep_core(N)}}
 
+#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+#define downsweep_nooverflow(offset,result,ghostsum,x) \
+  {{downsweep_nooverflow(N)}}
+
+#define downsweep(offset,result,ghostsum,x) \
+  downsweep_core(offset,result,ghostsum,x) & downsweep_nooverflow(offset,result,ghostsum,x)
+#else
 #define downsweep(offset,result,ghostsum,x) \
   downsweep_core(offset,result,ghostsum,x)
+#endif
 
 #define downsweep_barrier(tid,offset,result,ghostsum) \
   {{downsweep_barrier(N)}}
@@ -119,3 +127,27 @@
 // ---------------------------------------------------------------------------
 // END SPECIFICATION
 // ---------------------------------------------------------------------------
+#define x2t(x) \
+  __ite_wrapper(dtype)((x == 0) | (x == (N-1)), 0, \
+    __ite_wrapper(dtype)(iseven(x), (div2(x)-1), div2((x-1))))
+
+#define final_upsweep_barrier(tid,result,len) \
+  {{final_upsweep_barrier(N)}}
+
+#define final_downsweep_barrier(tid,result,ghostsum) \
+  {{final_downsweep_barrier(N)}}
+
+#if defined(SPEC_THREADWISE)
+#define upsweep_instantiation \
+  {{upsweep_instantiation(N)}}
+
+#define downsweep_instantiation \
+  tid, other_tid
+
+#elif defined(SPEC_ELEMENTWISE)
+#define upsweep_instantiation \
+  {{upsweep_instantiation(N,elementwise=True)}}
+
+#define downsweep_instantiation \
+  x2t(tid), x2t(other_tid)
+#endif

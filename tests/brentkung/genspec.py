@@ -27,7 +27,7 @@ def upsweep_pattern(N,rhs):
   for offset in [2**i for i in range(log2(N)+1)]:
     body.append('__implies(%s, %s)' % (lhs(offset), rhs(terms)))
     terms.append('result[left(x,%d)]' % (offset*2))
-  return '(' + ' & \\\n  '.join(body) + ')'
+  return '(' + ' & \\\n   '.join(body) + ')'
 
 def upsweep_core(N):
   return upsweep_pattern(N, lambda terms: 'result[x] == %s' % summation(reversed(terms), 'raddf'))
@@ -48,7 +48,7 @@ def upsweep_barrier(N):
   cases += [    gencase(d,offset,'>=','ai') for d,offset in zip(ds,offsets) ]
   cases.append( gencase(N/2,2,'<=','bi') )
   cases += [    gencase(d,offset,'==','bi') for d,offset in zip(ds,offsets) ]
-  return '(' + ' & \\\n  '.join(cases) + ')'
+  return '(' + ' & \\\n   '.join(cases) + ')'
 
 def upsweep_d_offset(N, include_loop_exit=True):
   offsets = [ 2**i for i in range(log2(N)) ]
@@ -101,13 +101,13 @@ def downsweep_core(N):
   cases = [ '__implies(%s, (result[x] == ghostsum[x]))' % lhs ]
   # result[x] has been updated
   cases.append( '__implies(%s, downsweep_summation(result,ghostsum,x))' % downsweep_updated_condition(N))
-  return '(' + ' & \\\n  '.join(cases) + ')'
+  return '(' + ' & \\\n   '.join(cases) + ')'
 
 def downsweep_nooverflow(N):
   def term(x): return 'ghostsum[term(x,%s)]' % x
-  cases = [ 'ghostsum[x]' ]
-  cases.extend(downsweep_terms_pattern(N,term,0))
-  rhs = 'rnooverflow_add_%d(%s)' % (log2(N), ', '.join(cases))
+  cases = downsweep_terms_pattern(N,term,0)
+  cases.append('ghostsum[x]')
+  rhs = '__add_noovfl(%s)' % ', '.join(cases)
   return '__implies(%s, %s)' % (downsweep_updated_condition(N), rhs)
 
 def downsweep_barrier(N,mul2shift=False):
@@ -120,18 +120,49 @@ def downsweep_barrier(N,mul2shift=False):
     return '__implies(%s, %s)' % (lhs,rhs)
   ds = [ 2**i for i in range(1,log2(N)) ]
   offsets = [ x for x in reversed(ds) ]
-  cases =      [ gencase(d,offset,'>','ai')                 for d,offset in reversed(zip(ds,offsets)) ]
+  cases =      [ gencase(d,offset,'>','ai')                  for d,offset in reversed(zip(ds,offsets)) ]
   cases.append('__implies((tid < 1),                downsweep(offset,result,ghostsum,ai_idx(div2(offset),tid)))')
   cases.append('__implies((tid < 1),                %s)' % genrhs('bi',lambda offset:offset/2,N))
   cases.extend([ gencase(d-1,offset,'==','lf_ai',lambda x:x) for d,offset in          zip(ds,offsets)  ])
   cases.extend([ gencase(d-1,offset,'==','lf_bi',lambda x:x) for d,offset in          zip(ds,offsets)  ])
-  return '(' + ' & \\\n  '.join(cases) + ')'
+  return '(' + ' & \\\n   '.join(cases) + ')'
 
 def downsweep_d_offset(N,include_loop_exit=True):
   ds = [ 2**i for i in range(1,log2(N)) ]
   if include_loop_exit: ds.append(N)
   offsets = [ x for x in reversed(ds) ]
   return '(' + ' | '.join([ '((d == %d) & (offset == %d))' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
+
+def upsweep_instantiation(N,elementwise=False):
+  cases = [ 'tid', '(tid+1)' ]
+  if elementwise: cases = [ 'x2t(%s)' % x for x in cases ]
+  for x in range(1,log2(N)-1):
+    term = 'div2(%s)' % cases[-1]
+    cases.append(term)
+  cases.extend([ x.replace('tid', 'other_tid') for x in cases ])
+  return ', '.join(cases)
+
+def final_upsweep_barrier(N):
+  cases = []
+  def gencase(d,aibi):
+    idx = '%s_idx(%d,tid)' % (aibi,N/2/d)
+    rhs = 'upsweep(/*offset=*/N,result,len,%s)' % idx
+    return '__implies((tid < %d), %s)' % (d,rhs)
+  ds = [ 2**i for i in reversed(range(log2(N)-1)) ]
+  offsets = [ 2**i for i in range(2,log2(N)+1) ]
+  assert len(ds) == len(offsets)
+  cases.append( gencase(N/2,'ai') )
+  cases += [    gencase(d,'ai') for d,offset in zip(ds,offsets) ]
+  cases.append( gencase(1,'bi') )
+  return '(' + ' & \\\n   '.join(cases) + ')'
+
+def final_downsweep_barrier(N,mul2shift=False):
+  cases = []
+  cases.append('__implies((tid < 1), downsweep(/*offset=*/2,result,ghostsum,ai_idx(1,tid)))')
+  cases.append('__implies((tid < 1), downsweep(/*offset=*/2,result,ghostsum,bi_idx(%d,tid)))' % (N/2))
+  cases.append('__implies((tid < %d), downsweep(/*offset=*/2,result,ghostsum,lf_ai_idx(2,tid)))' % (N/2-1))
+  cases.append('__implies((tid < %d), downsweep(/*offset=*/2,result,ghostsum,lf_bi_idx(2,tid)))' % (N/2-1))
+  return '(' + ' & \\\n   '.join(cases) + ')'
 
 def main(argv=None):
   if argv is None:
@@ -158,6 +189,9 @@ def main(argv=None):
     downsweep_nooverflow=downsweep_nooverflow,
     downsweep_barrier=downsweep_barrier,
     downsweep_d_offset=downsweep_d_offset,
+    upsweep_instantiation=upsweep_instantiation,
+    final_upsweep_barrier=final_upsweep_barrier,
+    final_downsweep_barrier=final_downsweep_barrier,
   )
 
 if __name__ == '__main__':

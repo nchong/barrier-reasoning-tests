@@ -77,5 +77,30 @@ __kernel void scan(__local unsigned *len) {
       result[bi] = raddf(result[ai], result[bi]);
     }
   }
+#elif INC_ENDSPEC
+//__non_temporal(__assume(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)));
+//__non_temporal(__assume(downsweep_barrier(tid,/*offset=*/2,result,ghostsum)));
+  __assume(upsweep_barrier(tid,/*offset=*/N,ghostsum,len));
+  __assume(downsweep_barrier(tid,/*offset=*/2,result,ghostsum));
+#endif
+
+#ifdef INC_ENDSPEC
+  __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
+  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), downsweep_instantiation);
+  barrier(CLK_LOCAL_MEM_FENCE);
+#if defined(SPEC_THREADWISE)
+  __non_temporal(__assert(__implies(tid == 0, raddf(result[0], len[1]) == result[1])));
+  __non_temporal(__assert(__implies(tid  < ((N/2)-1), raddf(result[mul2(tid)+1], len[mul2(tid)+2]) == result[mul2(tid)+2])));
+  __non_temporal(__assert(__implies((tid < other_tid) & (other_tid < ((N/2)-1)), raddf(result[mul2(tid)+2], len[mul2(tid)+3]) <= result[mul2(other_tid)+1])));
+  __non_temporal(__assert(__implies((0 < tid) & (tid < ((N/2)-1)) & (other_tid == 0), raddf(result[mul2(tid)+2],len[mul2(tid)+3]) <= result[N-1])));
+#elif defined(SPEC_ELEMENTWISE)
+  __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) <= result[other_tid])));
+#else
+  #error SPEC_THREADWISE|SPEC_ELEMENTWISE must be defined
+#endif
+#endif
+
+#ifdef FORCE_FAIL
+  __assert(false);
 #endif
 }
