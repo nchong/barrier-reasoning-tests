@@ -1,20 +1,12 @@
-#define __1D_WORK_GROUP
-#define __1D_GRID
-#include <opencl.h>
-
-#define N 8
-__axiom(get_local_size(0) == N);
-__axiom(get_num_groups(0) ==  1);
-
-#define isthreadid(t) (0 <= t & t < N)
+#define tid get_local_id(0)
+#define other_tid __other_int(tid)
 
 #define sweep(t,offset) \
   ((ghostsum_lower[t] <= ghostsum_upper[t]) & \
    __implies(t <  offset, (ghostsum_lower[t] == 0) & (ghostsum_upper[t] == t)) & \
    __implies(t >= offset, (ghostsum_lower[t] == t - offset + 1) & (ghostsum_upper[t] == t)))
 
-#define tid get_local_id(0)
-#define other_tid __other_int(tid)
+#define isthreadid(t) (0 <= t & t < N)
 
 __kernel void scan(__global int *input, __global int *output) {
   __local int sum[N];
@@ -35,6 +27,8 @@ __kernel void scan(__global int *input, __global int *output) {
   for (int offset = 1;
         __invariant(__no_read(output)), __invariant(__no_write(output)),
         __invariant(__no_read(sum)), __invariant(__no_write(sum)),
+        __invariant(__no_read(ghostsum_lower)), __invariant(__no_write(ghostsum_lower)),
+        __invariant(__no_read(ghostsum_upper)), __invariant(__no_write(ghostsum_upper)),
         __invariant(0 <= offset),
         __invariant(__is_pow2(offset)),
         __invariant(offset <= N),
