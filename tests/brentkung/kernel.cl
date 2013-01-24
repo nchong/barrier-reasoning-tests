@@ -94,7 +94,7 @@ __kernel void scan(__local unsigned *len) {
   __non_temporal(__assert(__implies((tid < other_tid) & (other_tid < ((N/2)-1)), raddf(result[mul2(tid)+2], len[mul2(tid)+3]) <= result[mul2(other_tid)+1])));
   __non_temporal(__assert(__implies((0 < tid) & (tid < ((N/2)-1)) & (other_tid == 0), raddf(result[mul2(tid)+2],len[mul2(tid)+3]) <= result[N-1])));
 #elif defined(SPEC_ELEMENTWISE)
-  __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) <= result[other_tid])));
+  __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid+1]) <= result[other_tid])));
 #else
   #error SPEC_THREADWISE|SPEC_ELEMENTWISE must be defined
 #endif

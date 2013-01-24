@@ -135,7 +135,7 @@ def downsweep_d_offset(N,include_loop_exit=True):
 
 def upsweep_instantiation(N,elementwise=False):
   cases = [ 'tid', '(tid+1)' ]
-  if elementwise: cases = [ 'x2t(%s)' % x for x in cases ]
+  if elementwise: cases = [ 'x2t(tid)', '(x2t(tid)+1)' ]
   for x in range(1,log2(N)-1):
     term = 'div2(%s)' % cases[-1]
     cases.append(term)
