@@ -59,18 +59,18 @@ def upsweep_d_offset(N, include_loop_exit=True):
   return '(' + ' | '.join([ '(d == %d & offset == %d)' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
 
 def sum_pow2_zeroes(N):
-  cases = [ '__ite((%s < bit) & !isone(%s,x), pow2(%s), %s)' % (i,i,i,0) for i in range(log2(N)-1) ]
+  cases = [ '__ite_dtype((%s < bit) & !isone(%s,x), pow2(%s), %s)' % (i,i,i,0) for i in range(log2(N)-1) ]
   return '(' + ' + \\\n'.join(cases) + ')'
 
 def downsweep_pattern(N,term,identity):
   offsets = [0] + [ 2**i for i in range(log2(N)-1) ]
   xs = range(log2(N))
-  cases = [ '__ite((offset <= %s), %s, %s)' % (offset,term(x),identity) for offset,x in reversed(zip(offsets,xs)) ]
+  cases = [ '__ite_rtype((offset <= %s), %s, %s)' % (offset,term(x),identity) for offset,x in reversed(zip(offsets,xs)) ]
   return cases
 
 def downsweep_core(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),'ridentity')
-  return '(' + 'result[x] == __ite(isvertex(x,mul2(offset)), %s, ghostsum[x])' % summation(cases, 'raddf') + ')'
+  return '(' + 'result[x] == __ite_rtype(isvertex(x,mul2(offset)), %s, ghostsum[x])' % summation(cases, 'raddf') + ')'
 
 def downsweep_nooverflow(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),'ridentity')

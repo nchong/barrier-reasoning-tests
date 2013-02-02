@@ -5,25 +5,45 @@
   #error This specification is only valid when N={{N}}
 #endif
 
-#ifndef dtype
-  #error dtype must be defined
+#if dwidth == 8
+  #define __ite_dtype(b,x,y) __ite_unsigned_char(b,x,y)
+#elif dwidth == 16
+  #define __ite_dtype(b,x,y) __ite_unsigned_short(b,x,y)
+#elif dwidth == 32
+  #define __ite_dtype(b,x,y) __ite_unsigned_int(b,x,y)
+#elif dwidth == 64
+  #define __ite_dtype(b,x,y) __ite_unsigned_long(b,x,y)
+#else
+  #error dwidth must be defined
 #endif
 
-#ifndef rtype
-  #error rtype must be defined
+#if rwidth == 8
+  #define __binop_add_raddf(x,y) __add_unsigned_char(x,y)
+  #define __ite_rtype(b,x,y) __ite_unsigned_char(b,x,y)
+#elif rwidth == 16
+  #define __binop_add_raddf(x,y) __add_unsigned_short(x,y)
+  #define __ite_rtype(b,x,y) __ite_unsigned_short(b,x,y)
+#elif rwidth == 32
+  #define __binop_add_raddf(x,y) __add_unsigned_int(x,y)
+  #define __ite_rtype(b,x,y) __ite_unsigned_int(b,x,y)
+#elif rwidth == 64
+  #define __binop_add_raddf(x,y) __add_unsigned_long(x,y)
+  #define __ite_rtype(b,x,y) __ite_unsigned_long(b,x,y)
+#else
+  #error rwidth must be defined
 #endif
 
 #if defined(BINOP_ADD)
-  #define raddf(x,y) (x + y)
-  #define raddf_primed(x,y) (x + y)
+  #define raddf(x,y) __binop_add_raddf(x,y)
+  #define raddf_primed(x,y) __binop_add_raddf(x,y)
   #define ridentity 0
 #elif defined(BINOP_OR)
   #define raddf(x,y) (x | y)
   #define raddf_primed(x,y) (x | y)
   #define ridentity 0
 #elif defined(BINOP_MAX)
-  #define raddf(x,y) __ite(x < y, y, x)
-  #define raddf_primed(x,y) __ite(x < y, y, x)
+  #define raddf(x,y) __ite_rtype(x < y, y, x)
+  #define raddf_primed(x,y) __ite_rtype(x < y, y, x)
   #define ridentity 0
 #elif defined(BINOP_ABSTRACT)
   #define raddf(x,y) __add_abstract(x,y)
@@ -36,8 +56,6 @@
 // ---------------------------------------------------------------------------
 // HELPERS
 // ---------------------------------------------------------------------------
-#define __ite_wrapper(ty) __concatenate(__ite_,ty)
-#define __ite(b,x,y) __ite_wrapper(rtype)(b,x,y)
 #define __non_temporal(x) \
   __non_temporal_loads_begin(), x, __non_temporal_loads_end()
 
@@ -91,7 +109,7 @@
   {{sum_pow2_zeroes(N)}}
 
 #define term(ghostsum,bit,x) \
-  __ite(!isone(bit,x), 0, ghostsum[x + sum_pow2_zeroes(bit,x) - pow2(bit)])
+  __ite_rtype(!isone(bit,x), 0, ghostsum[x + sum_pow2_zeroes(bit,x) - pow2(bit)])
 
 #define downsweep_core(offset,result,ghostsum,x) \
   {{downsweep_core(N)}}
@@ -116,7 +134,7 @@
 // ---------------------------------------------------------------------------
 // END SPECIFICATION
 // ---------------------------------------------------------------------------
-#define x2t(x) __ite_wrapper(dtype)(iseven(x), div2(x), div2((x-1)))
+#define x2t(x) __ite_dtype(iseven(x), div2(x), div2((x-1)))
 
 #define final_upsweep_barrier(tid,result,len) \
   {{final_upsweep_barrier(N)}}

@@ -8,13 +8,33 @@
 #endif
 
 // control-plane
-#ifndef dtype
-#define dtype uint
+#if dwidth == 8
+  #define dtype unsigned char
+#elif dwidth == 16
+  #define dtype unsigned short
+#elif dwidth == 32
+  #define dtype unsigned int
+#elif dwidth == 64
+  #define dtype unsigned long
+#else
+  #error dwidth must be defined
 #endif
 
 // data-plane
-#ifndef rtype
-#define rtype uint
+#if rwidth == 8
+  #define rtype unsigned char
+  #define nooverflow_add(x,y) __add_noovfl_unsigned_char(x,y)
+#elif rwidth == 16
+  #define rtype unsigned short
+  #define nooverflow_add(x,y) __add_noovfl_unsigned_short(x,y)
+#elif rwidth == 32
+  #define rtype unsigned int
+  #define nooverflow_add(x,y) __add_noovfl_unsigned_int(x,y)
+#elif rwidth == 64
+  #define rtype unsigned long
+  #define nooverflow_add(x,y) __add_noovfl_unsigned_long(x,y)
+#else
+  #error rwidth must be defined
 #endif
 
 // specification header
@@ -49,7 +69,7 @@ __kernel void prescan(__local rtype *len) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
 #if defined(INC_ENDSPEC) && defined(BINOP_ADD)
-      result[bi] = __add_noovfl_unsigned(result[ai], result[bi]);
+      result[bi] = nooverflow_add(result[ai], result[bi]);
 #else
       result[bi] = raddf_primed(result[ai], result[bi]);
 #endif
@@ -89,9 +109,7 @@ __kernel void prescan(__local rtype *len) {
       rtype temp = result[ai];
       result[ai] = result[bi];
 #if defined(INC_ENDSPEC) && defined(BINOP_ADD)
-      // TODO: should make this call dependent on rtype
-      // invariants will fail if rtype != uint
-      result[bi] = __add_noovfl_unsigned(result[bi], temp);
+      result[bi] = nooverflow_add(result[bi], temp);
 #else
       result[bi] = raddf(result[bi], temp);
 #endif
