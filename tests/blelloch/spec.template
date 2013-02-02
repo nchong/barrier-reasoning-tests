@@ -67,7 +67,13 @@
 #define mul2add1(x) (mul2(x) | 1)
 #define pow2(bit) (1 << bit)
 
-#define tid get_local_id(0)
+#if defined(__CUDA_ARCH__)
+  #define tid threadIdx.x
+#elif defined(__OPENCL_VERSION__)
+  #define tid get_local_id(0)
+#else
+  #error Not using CUDA or OpenCL?
+#endif
 #define other_tid __other_int(tid)
 
 #define isvertex(x,offset) ((offset == 0) | (modpow2(x+1,offset) == 0))
