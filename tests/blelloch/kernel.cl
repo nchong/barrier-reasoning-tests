@@ -37,6 +37,10 @@
   #error rwidth must be defined
 #endif
 
+#define __1D_WORK_GROUP
+#define __1D_GRID
+#include "opencl.h"
+
 // specification header
 #define __stringify_inner(x) #x
 #define __stringify(x) __stringify_inner(x)

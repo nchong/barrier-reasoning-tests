@@ -1,4 +1,10 @@
 // ---------------------------------------------------------------------------
+// AXIOMS    
+// ---------------------------------------------------------------------------
+__axiom(get_local_size(0) == {{NDIV2}});
+__axiom(get_num_groups(0) == 1);
+
+// ---------------------------------------------------------------------------
 // PARAMETERS
 // ---------------------------------------------------------------------------
 #if N != {{N}}
@@ -47,7 +53,7 @@
   #define ridentity 0
 #elif defined(BINOP_ABSTRACT)
   #define raddf(x,y) __add_abstract(x,y)
-  #define raddf_primed(x,y) __add_abstract_primed(x,y)
+  #define raddf_primed(x,y) __add_abstract_1(x,y)
   #define ridentity 0
 #else
   #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT must be defined
