@@ -3,8 +3,6 @@
 #include <cstdio>
 #endif
 
-#include "cuda.h"
-
 #ifndef N
 #error N must be defined
 #endif
@@ -38,6 +36,10 @@
 #else
   #error rwidth must be defined
 #endif
+
+#define __1D_THREAD_BLOCK
+#define __1D_GRID
+#include "cuda.h"
 
 // specification header
 #define __stringify_inner(x) #x
@@ -140,7 +142,6 @@ __global__ void blelloch(rtype *len, rtype *out) {
     out[2*t+1] = result[2*t+1];
   }
 #endif
-
 
 #ifdef FORCE_FAIL
   __assert(false);
