@@ -8,14 +8,38 @@
 #endif
 
 // control-plane
-#ifndef dtype
-#define dtype uint
+#if dwidth == 8
+  #define dtype unsigned char
+#elif dwidth == 16
+  #define dtype unsigned short
+#elif dwidth == 32
+  #define dtype unsigned int
+#elif dwidth == 64
+  #define dtype unsigned long
+#else
+  #error dwidth must be defined
 #endif
 
 // data-plane
-#ifndef rtype
-#define rtype uint
+#if rwidth == 8
+  #define rtype unsigned char
+  #define nooverflow_add(x,y) __add_noovfl_unsigned_char(x,y)
+#elif rwidth == 16
+  #define rtype unsigned short
+  #define nooverflow_add(x,y) __add_noovfl_unsigned_short(x,y)
+#elif rwidth == 32
+  #define rtype unsigned int
+  #define nooverflow_add(x,y) __add_noovfl_unsigned_int(x,y)
+#elif rwidth == 64
+  #define rtype unsigned long
+  #define nooverflow_add(x,y) __add_noovfl_unsigned_long(x,y)
+#else
+  #error rwidth must be defined
 #endif
+
+#define __1D_WORK_GROUP
+#define __1D_GRID
+#include "opencl.h"
 
 // specification header
 #define __stringify_inner(x) #x
@@ -23,12 +47,12 @@
 #define __spec_h(N) __concatenate(N, _spec.h)
 #include __stringify(__spec_h(N))
 
-__kernel void scan(__local unsigned *len) {
-  __local unsigned ghostsum[N];
-  __local unsigned result[N];
+__kernel void scan(__local rtype *len) {
+  __local rtype ghostsum[N];
+  __local rtype result[N];
 
-  unsigned offset;
-  unsigned t = get_local_id(0);
+  dtype offset;
+  dtype t = get_local_id(0);
 
 #ifdef INC_UPSWEEP
   if (t < N/2) {
@@ -38,7 +62,7 @@ __kernel void scan(__local unsigned *len) {
 
   offset = 1;
   for (
-    unsigned d=N/2;
+    dtype d=N/2;
     __invariant(upsweep_d_offset),
     __invariant(upsweep_barrier(tid,offset,result,len)),
     d > 0;
@@ -46,8 +70,8 @@ __kernel void scan(__local unsigned *len) {
     __barrier_invariant(upsweep_barrier(tid,offset,result,len), tid, 2*tid, 2*tid+1);
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
-      unsigned ai = offset * (2 * t + 1) - 1;
-      unsigned bi = offset * (2 * t + 2) - 1;
+      dtype ai = offset * (2 * t + 1) - 1;
+      dtype bi = offset * (2 * t + 2) - 1;
       result[bi] += result[ai];
     }
     offset <<= 1;
@@ -61,7 +85,7 @@ __kernel void scan(__local unsigned *len) {
   __array_snapshot(ghostsum, result);
 
   for (
-    unsigned d = 2;
+    dtype d = 2;
     __invariant(downsweep_d_offset),
     __invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)),
     __invariant(downsweep_barrier(tid,offset,result,ghostsum)),
@@ -72,8 +96,8 @@ __kernel void scan(__local unsigned *len) {
     __barrier_invariant(downsweep_barrier(tid,mul2(offset),result,ghostsum), tid, lf_ai_tid(tid), lf_bi_tid(tid)),
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < (d - 1)) {
-      unsigned ai = (offset * (t + 1)) - 1;
-      unsigned bi = ai + (offset >> 1);
+      dtype ai = (offset * (t + 1)) - 1;
+      dtype bi = ai + (offset >> 1);
       result[bi] = raddf(result[ai], result[bi]);
     }
   }

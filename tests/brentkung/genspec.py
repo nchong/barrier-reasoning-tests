@@ -63,20 +63,20 @@ def foldright(f,xs,i):
 
 def ilog2(N):
   def gencase(i):
-    return '__ite((%d <= x) & (x < %d), %s' % (2**i, 2**(i+1), i)
-  cases = [ '__ite(x == 1, 0' ]
+    return '__ite_dtype((%d <= x) & (x < %d), %s' % (2**i, 2**(i+1), i)
+  cases = [ '__ite_dtype(x == 1, 0' ]
   cases.extend([ gencase(i) for i in range(1,log2(N)-1) ])
   return foldright(lambda x,y: '(%s, %s))' % (x,y), cases, '%d' % (log2(N)-1))
 
 def downsweep_term(N):
   def gencase(i):
-    return '__ite((%d <= i) & isone(%d, (x+1)), %d, 0)' % (i,i,2**i)
+    return '__ite_dtype((%d <= i) & isone(%d, (x+1)), %d, 0)' % (i,i,2**i)
   cases = [ gencase(i) for i in range(log2(N)-1) ]
   return '(x - (%s))' % ' + '.join(cases)
 
 def downsweep_terms_pattern(N,term,identity):
   def gencase(i):
-    return '__ite(isone(%d,(x+1)) & (%d < ilog2(x+1)), %s, %s)' % (i,i,term(i),identity)
+    return '__ite_rtype(isone(%d,(x+1)) & (%d < ilog2(x+1)), %s, %s)' % (i,i,term(i),identity)
   return [ gencase(i) for i in reversed(range(log2(N)-1)) ]
 
 def downsweep_summation(N):
