@@ -1,3 +1,15 @@
+#define __1D_WORK_GROUP
+#define __1D_GRID
+#include "opencl.h"
+
+// number of elements
+#ifndef N
+#error N must be defined
+#endif
+
+__axiom(get_local_size(0) == N);
+__axiom(get_num_groups(0) == 1);
+
 #define tid get_local_id(0)
 #define other_tid __other_int(tid)
 
@@ -53,7 +65,7 @@ __kernel void scan(__global int *input, __global int *output) {
     if (tid >= offset)
     {
       // concretely
-      sum[tid] = __add_noovfl_signed(sum[tid], temp);
+      sum[tid] = __add_noovfl_int(sum[tid], temp);
       // abstractly, adding adjacent intervals
       __assert(ghosttemp_lower <= ghosttemp_upper);
       __assert(ghostsum_lower[tid] <= ghostsum_upper[tid]);
