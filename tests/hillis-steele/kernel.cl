@@ -29,6 +29,8 @@ __kernel void scan(__global int *input, __global int *output) {
   ghostsum_lower[tid] = tid;
   ghostsum_upper[tid] = tid;
 
+  __assert(__accessed(input, tid));
+
   __barrier_invariant(sweep(tid,1), tid, tid-1);
   barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -56,6 +58,8 @@ __kernel void scan(__global int *input, __global int *output) {
       ghosttemp_upper = ghostsum_upper[tid-offset];
     }
 
+    __read_permission(ghostsum_lower[tid]);
+    __read_permission(ghostsum_upper[tid]);
     __barrier_invariant(sweep(tid,offset), tid, tid-offset, other_tid);
     __barrier_invariant(__implies(tid >= offset, ghosttemp_lower == ghostsum_lower[tid-offset]), tid);
     __barrier_invariant(__implies(tid >= offset, ghosttemp_upper == ghostsum_upper[tid-offset]), tid);
@@ -73,10 +77,13 @@ __kernel void scan(__global int *input, __global int *output) {
       ghostsum_lower[tid] = ghosttemp_lower;
     }
 
+    __read_permission(ghostsum_lower[tid]);
+    __read_permission(ghostsum_upper[tid]);
     __barrier_invariant(sweep(tid,2*offset), tid, tid-(2*offset));
     barrier(CLK_LOCAL_MEM_FENCE);
   }
 
   output[tid] = sum[tid];
+  __assert(__accessed(output, tid));
 
 }
