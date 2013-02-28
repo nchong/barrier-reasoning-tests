@@ -58,6 +58,30 @@ def upsweep_d_offset(N, include_loop_exit=True):
     ds += [0]
   return '(' + ' | '.join([ '(d == %d & offset == %d)' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
 
+def upsweep_permissions(N):
+  def lhs(off):
+    return '(((offset == %d) & isvertex(x,offset)) | ((%d < offset) & stopped(x,%d)))' % (off,off,off)
+  def rhs(x): return '__read_permission(%s)' % x
+  body = [ rhs(x) for x in [ 'len[x]', 'result[x]' ] ]
+  for offset in [2**i for i in range(1, log2(N)+1)]:
+    body.append('if (%s) %s' % (lhs(offset), rhs('result[left(x,%d)]' % offset)))
+  return '{' + ' \\\n  '.join(body) + '}'
+
+def upsweep_barrier_permissions(N):
+  cases = []
+  def gencase(d,offset,rel,aibi):
+    idx = '%s_idx(%d,tid)' % (aibi,N/2/d)
+    rhs = 'upsweep_permissions(offset,result,len,%s)' % idx
+    return 'if ((tid < %d) && (offset %s %d)) %s' % (d,rel,offset,rhs)
+  ds = [ 2**i for i in reversed(range(log2(N)-1)) ]
+  offsets = [ 2**i for i in range(2,log2(N)+1) ]
+  assert len(ds) == len(offsets)
+  cases.append( gencase(N/2,1,'>=','ai') )
+  cases += [    gencase(d,offset,'>=','ai') for d,offset in zip(ds,offsets) ]
+  cases.append( gencase(N/2,2,'<=','bi') )
+  cases += [    gencase(d,offset,'==','bi') for d,offset in zip(ds,offsets) ]
+  return '{' + ' \\\n  '.join(cases) + '}'
+
 def sum_pow2_zeroes(N):
   cases = [ '__ite_dtype((%s < bit) & !isone(%s,x), pow2(%s), %s)' % (i,i,i,0) for i in range(log2(N)-1) ]
   return '(' + ' + \\\n'.join(cases) + ')'
@@ -146,6 +170,8 @@ def main(argv=None):
     upsweep_nooverflow=upsweep_nooverflow,
     upsweep_barrier=upsweep_barrier,
     upsweep_d_offset=upsweep_d_offset,
+    upsweep_permissions=upsweep_permissions,
+    upsweep_barrier_permissions=upsweep_barrier_permissions,
     sum_pow2_zeroes=sum_pow2_zeroes,
     downsweep_core=downsweep_core,
     downsweep_nooverflow=downsweep_nooverflow,

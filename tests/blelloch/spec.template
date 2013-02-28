@@ -121,6 +121,12 @@ __axiom(get_num_groups(0) == 1);
 #define upsweep_d_offset \
   {{upsweep_d_offset(N)}}
 
+#define upsweep_permissions(offset,result,len,x) \
+  {{upsweep_permissions(N)}}
+
+#define upsweep_barrier_permissions(tid,offset,result,len) \
+  {{upsweep_barrier_permissions(N)}}
+
 // ---------------------------------------------------------------------------
 // DOWNSWEEP INVARIANTS
 // ---------------------------------------------------------------------------
