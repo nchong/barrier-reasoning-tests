@@ -41,6 +41,9 @@
 #define __1D_GRID
 #include "opencl.h"
 
+DECLARE_UF_BINARY(A, rtype, rtype, rtype);
+DECLARE_UF_BINARY(A1, rtype, rtype, rtype);
+
 // specification header
 #define __stringify_inner(x) #x
 #define __stringify(x) __stringify_inner(x)
