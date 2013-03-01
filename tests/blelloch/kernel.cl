@@ -105,7 +105,7 @@ __kernel void prescan(__local rtype *len) {
 //__non_temporal(__assert(upsweep_barrier(tid,/*offset=*/N,result,len)));
 #elif INC_DOWNSWEEP
   offset = N;
-  __assume(upsweep_barrier(tid,/*offset=*/N,result,len));
+  __non_temporal(__assume(upsweep_barrier(tid,/*offset=*/N,result,len)));
 //__non_temporal(__assert(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)));
 #endif
 
@@ -118,6 +118,22 @@ __kernel void prescan(__local rtype *len) {
 
   for (
     dtype d = 1;
+    __invariant(__no_write(len)),
+    __invariant(__no_write(ghostsum)),
+    __invariant(
+      __read_implies(result,
+         __ite(offset == N,
+           tid == 0,
+           __read_offset(result)/sizeof(rtype) == ai_idx(offset,tid) |
+           __read_offset(result)/sizeof(rtype) == bi_idx(offset,tid)))
+    ),
+    __invariant(
+      __write_implies(result,
+        __ite(offset == N,
+          (tid == 0) & (__write_offset(result)/sizeof(rtype) == (N-1)),
+          __write_offset(result)/sizeof(rtype) == ai_idx(offset,tid)  |
+          __write_offset(result)/sizeof(rtype) == bi_idx(offset,tid)))
+    ),
     __invariant(downsweep_d_offset),
     __invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)),
     __invariant(downsweep_barrier(tid,div2(offset),result,ghostsum)),
