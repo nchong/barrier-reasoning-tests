@@ -156,6 +156,12 @@ __axiom(get_num_groups(0) == 1);
 #define downsweep_d_offset \
   {{downsweep_d_offset(N)}}
 
+#define downsweep_permissions(offset,result,ghostsum,x) \
+  {{downsweep_permissions(N)}}
+
+#define downsweep_barrier_permissions(tid,offset,result,ghostsum) \
+  {{downsweep_barrier_permissions(N)}}
+
 // ---------------------------------------------------------------------------
 // END SPECIFICATION
 // ---------------------------------------------------------------------------

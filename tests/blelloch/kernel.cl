@@ -105,6 +105,8 @@ __kernel void prescan(__local rtype *len) {
     d < N;
     d <<= 1) {
     offset >>= 1;
+    upsweep_barrier_permissions(tid,/*offset=*/N,ghostsum,len)
+    downsweep_barrier_permissions(tid,offset,result,ghostsum)
     __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), tid);
     __barrier_invariant(downsweep_barrier(tid,offset,result,ghostsum), tid, div2(tid));
     barrier(CLK_LOCAL_MEM_FENCE);

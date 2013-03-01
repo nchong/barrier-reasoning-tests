@@ -19,6 +19,9 @@ def log2(x):
 def summation(terms,f):
   return reduce(lambda x,y: '%s(%s,%s)' % (f,x,y), terms)
 
+def read_permission(x):
+  return '__read_permission(%s)' % x
+
 def upsweep_pattern(N,rhs):
   terms = [ 'len[x]' ]
   def lhs(off):
@@ -62,8 +65,7 @@ def upsweep_permissions(N):
   terms = [ 'len[x]', 'result[x]' ]
   for offset in [2**i for i in range(1, log2(N)+1)]:
     terms.append('result[left(x,%d)]' % offset)
-  def rhs(x): return '__read_permission(%s)' % x
-  body = [ rhs(x) for x in terms ]
+  body = [ read_permission(x) for x in terms ]
   return '{' + ' \\\n  '.join(body) + '}'
 
 def upsweep_barrier_permissions(N):
@@ -117,6 +119,25 @@ def downsweep_d_offset(N,include_loop_exit=True):
     ds += [N]
   offsets = [x for x in reversed(ds)]
   return '(' + ' | '.join([ '(d == %s & offset == %s)' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
+
+def downsweep_permissions(N):
+  terms = [ 'result[x]' ]
+  for x in range(log2(N)):
+    terms.append('ghostsum[x + sum_pow2_zeroes(%d,x) - pow2(%d)]' % (x,x))
+  body = [ read_permission(x) for x in terms ]
+  return '{' + ' \\\n  '.join(body) + '}'
+
+def downsweep_barrier_permissions(N):
+  ds = [ 2**i for i in range(log2(N)) ]
+  offsets = [x for x in reversed(ds)][1:] + [0]
+  def gencase(d,offset,rel,aibi):
+    idx = '%s_idx(%d,tid)' % (aibi,N/2/d)
+    rhs = 'downsweep_permissions(offset,result,ghostsum,%s)' % idx
+    return 'if ((tid < %d) && (offset %s %d)) %s' % (d,rel,offset,rhs)
+  cases = [     gencase(d,    offset,    '>=','ai') for d,offset in zip(ds,offsets) ]
+  cases.append( gencase(ds[0],offsets[0],'>=','bi') )
+  cases += [    gencase(d,    offset,    '=='  ,'bi') for d,offset in zip(ds[1:],offsets[1:]) ]
+  return '{' + ' \\\n  '.join(cases) + '}'
 
 def upsweep_instantiation(N,elementwise=False):
   cases = [ 'tid' ]
@@ -176,6 +197,8 @@ def main(argv=None):
     downsweep_nooverflow=downsweep_nooverflow,
     downsweep_barrier=downsweep_barrier,
     downsweep_d_offset=downsweep_d_offset,
+    downsweep_permissions=downsweep_permissions,
+    downsweep_barrier_permissions=downsweep_barrier_permissions,
     upsweep_instantiation=upsweep_instantiation,
     final_upsweep_barrier=final_upsweep_barrier,
     final_downsweep_barrier=final_downsweep_barrier,
