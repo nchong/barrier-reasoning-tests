@@ -62,10 +62,15 @@ def upsweep_d_offset(N, include_loop_exit=True):
   return '(' + ' | '.join([ '(d == %d & offset == %d)' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
 
 def upsweep_permissions(N):
-  terms = [ 'len[x]', 'result[x]' ]
+  def lhs(off):
+    return '(((offset == %d) & isvertex(x,offset)) | ((%d < offset) & stopped(x,%d)))' % (off,off,off)
+  def rhs(terms):
+    return ' '.join([ read_permission(x) for x in terms])
+  body = [ read_permission(x) for x in ['result[x]', 'len[x]'] ]
+  terms = [ 'result[left(x,2)]' ]
   for offset in [2**i for i in range(1, log2(N)+1)]:
-    terms.append('result[left(x,%d)]' % offset)
-  body = [ read_permission(x) for x in terms ]
+    body.append('if (%s) { %s }' % (lhs(offset), rhs(terms)))
+    terms.append('result[left(x,%d)]' % (offset*2))
   return '{' + ' \\\n  '.join(body) + '}'
 
 def upsweep_barrier_permissions(N):

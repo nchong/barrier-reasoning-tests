@@ -66,6 +66,22 @@ __kernel void prescan(__local rtype *len) {
   offset = 1;
   for (
     dtype d=N/2;
+    __invariant(__no_write(len)),
+    __invariant(__no_read(ghostsum)),
+    __invariant(__no_write(ghostsum)),
+    __invariant(
+      __read_implies(result,
+        (offset > 1) &
+        (__read_offset(result)/sizeof(rtype) == ai_idx(div2(offset),tid) |
+         __read_offset(result)/sizeof(rtype) == bi_idx(div2(offset),tid)))
+    ),
+    __invariant(
+      __write_implies(result,
+        __ite(offset == 1,
+          __write_offset(result)/sizeof(rtype) == ai_idx(1,tid) |
+          __write_offset(result)/sizeof(rtype) == bi_idx(1,tid),
+          __write_offset(result)/sizeof(rtype) == bi_idx(div2(offset),tid)))
+    ),
     __invariant(upsweep_d_offset),
     __invariant(upsweep_barrier(tid,offset,result,len)),
     d > 0;
