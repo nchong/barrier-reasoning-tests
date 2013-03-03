@@ -177,20 +177,13 @@ def final_downsweep_barrier(N):
   cases.append( gencase(N/2,'bi') )
   return '(' + ' & \\\n  '.join(cases) + ')'
 
-def main(argv=None):
-  if argv is None:
-    argv = sys.argv
-  progname = argv[0]
-  if len(argv) != 2:
-    print 'error: need [N], number of elements'
-    return 1
-  N = int(argv[1])
+def genspec(N):
   if not ispow2(N):
     print 'error: [N] must be a power of two'
     return 1
   env = Environment(loader=PackageLoader('genspec', '.'))
   t = env.get_template('spec.template')
-  print t.render(N=N, NDIV2=N/2,
+  return t.render(N=N, NDIV2=N/2,
     upsweep_core=upsweep_core,
     upsweep_nooverflow=upsweep_nooverflow,
     upsweep_barrier=upsweep_barrier,
@@ -208,6 +201,16 @@ def main(argv=None):
     final_upsweep_barrier=final_upsweep_barrier,
     final_downsweep_barrier=final_downsweep_barrier,
   )
+
+def main(argv=None):
+  if argv is None:
+    argv = sys.argv
+  progname = argv[0]
+  if len(argv) != 2:
+    print 'error: need [N], number of elements'
+    return 1
+  N = int(argv[1])
+  print genspec(N)
 
 if __name__ == '__main__':
   sys.exit(main())
