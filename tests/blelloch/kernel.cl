@@ -66,9 +66,8 @@ __kernel void prescan(__local rtype *len) {
   offset = 1;
   for (
     dtype d=N/2;
-    __invariant(__no_write(len)),
-    __invariant(__no_read(ghostsum)),
-    __invariant(__no_write(ghostsum)),
+    __invariant(upsweep_d_offset),
+#ifdef CHECK_RACE
     __invariant(
       __read_implies(result,
         (offset > 1) &
@@ -82,12 +81,20 @@ __kernel void prescan(__local rtype *len) {
           __write_offset(result)/sizeof(rtype) == bi_idx(1,tid),
           __write_offset(result)/sizeof(rtype) == bi_idx(div2(offset),tid)))
     ),
-    __invariant(upsweep_d_offset),
+    __invariant(__implies(__read(result) & (offset == N), tid == 0)),
+    __invariant(__implies(__write(result) & (offset == N), tid == 0)),
+#endif
+#ifdef CHECK_BI
     __invariant(upsweep_barrier(tid,offset,result,len)),
+#endif
     d > 0;
     d >>= 1) {
+#ifdef CHECK_BI_ACCESS
     upsweep_barrier_permissions(tid,offset,result,len)
+#endif
+#ifdef CHECK_BI
     __barrier_invariant(upsweep_barrier(tid,offset,result,len), tid, 2*tid, 2*tid+1);
+#endif
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
@@ -110,7 +117,9 @@ __kernel void prescan(__local rtype *len) {
 #endif
 
 #ifdef INC_DOWNSWEEP
+#ifdef CHECK_BI
   __array_snapshot(ghostsum, result);
+#endif
 
   if (t == 0) {
     result[N-1] = ridentity;
@@ -118,8 +127,9 @@ __kernel void prescan(__local rtype *len) {
 
   for (
     dtype d = 1;
+    __invariant(downsweep_d_offset),
+#ifdef CHECK_RACE
     __invariant(__no_write(len)),
-    __invariant(__no_write(ghostsum)),
     __invariant(
       __read_implies(result,
          __ite(offset == N,
@@ -134,16 +144,22 @@ __kernel void prescan(__local rtype *len) {
           __write_offset(result)/sizeof(rtype) == ai_idx(offset,tid)  |
           __write_offset(result)/sizeof(rtype) == bi_idx(offset,tid)))
     ),
-    __invariant(downsweep_d_offset),
+#endif
+#ifdef CHECK_BI
     __invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)),
     __invariant(downsweep_barrier(tid,div2(offset),result,ghostsum)),
+#endif
     d < N;
     d <<= 1) {
     offset >>= 1;
+#ifdef CHECK_BI_ACCESS
     upsweep_barrier_permissions(tid,/*offset=*/N,ghostsum,len)
     downsweep_barrier_permissions(tid,offset,result,ghostsum)
+#endif
+#ifdef CHECK_BI
     __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), tid);
     __barrier_invariant(downsweep_barrier(tid,offset,result,ghostsum), tid, div2(tid));
+#endif
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
