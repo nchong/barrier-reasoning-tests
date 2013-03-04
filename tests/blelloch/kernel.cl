@@ -68,6 +68,9 @@ __kernel void prescan(__local rtype *len) {
     dtype d=N/2;
     __invariant(upsweep_d_offset),
 #ifdef CHECK_RACE
+    __invariant(__uniform_int(offset)),
+    __invariant(__uniform_int(d)),
+    __invariant(__uniform_bool(__enabled())),
     __invariant(
       __read_implies(result,
         (offset > 1) &
