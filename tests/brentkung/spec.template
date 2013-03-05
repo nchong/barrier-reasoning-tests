@@ -47,8 +47,8 @@ __axiom(get_num_groups(0) == 1);
 #endif
 
 #if defined(BINOP_ADD)
-  #define raddf(x,y) (x + y)
-  #define raddf_primed(x,y) (x + y)
+  #define raddf(x,y) __binop_add_raddf(x,y)
+  #define raddf_primed(x,y) __binop_add_raddf(x,y)
   #define ridentity 0
 #elif defined(BINOP_OR)
   #define raddf(x,y) (x | y)
@@ -59,8 +59,8 @@ __axiom(get_num_groups(0) == 1);
   #define raddf_primed(x,y) __ite_rtype(x < y, y, x)
   #define ridentity 0
 #elif defined(BINOP_ABSTRACT)
-  #define raddf(x,y) __add_abstract(x,y)
-  #define raddf_primed(x,y) __add_abstract_1(x,y)
+  #define raddf(x,y) A(x,y)
+  #define raddf_primed(x,y) A1(x,y)
   #define ridentity 0
 #else
   #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT must be defined
@@ -80,7 +80,13 @@ __axiom(get_num_groups(0) == 1);
 #define mul2add1(x) (mul2(x) | 1)
 #define pow2(bit) (1 << bit)
 
-#define tid get_local_id(0)
+#if defined(__CUDA_ARCH__)
+  #define tid threadIdx.x
+#elif defined(__OPENCL_VERSION__)
+  #define tid get_local_id(0)
+#else
+  #error Not using CUDA or OpenCL?
+#endif
 #define other_tid __other_int(tid)
 
 #define isvertex(x,offset) ((offset == 0) | (modpow2(x+1,offset) == 0))
@@ -121,6 +127,12 @@ __axiom(get_num_groups(0) == 1);
 
 #define upsweep_d_offset \
   {{upsweep_d_offset(N)}}
+
+#define upsweep_permissions(offset,result,len,x) \
+  {{upsweep_permissions(N)}}
+
+#define upsweep_barrier_permissions(tid,offset,result,len) \
+  {{upsweep_barrier_permissions(N)}}
 
 // ---------------------------------------------------------------------------
 // DOWNSWEEP INVARIANTS

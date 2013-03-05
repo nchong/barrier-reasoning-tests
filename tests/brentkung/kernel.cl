@@ -41,6 +41,9 @@
 #define __1D_GRID
 #include "opencl.h"
 
+DECLARE_UF_BINARY(A, rtype, rtype, rtype);
+DECLARE_UF_BINARY(A1, rtype, rtype, rtype);
+
 // specification header
 #define __stringify_inner(x) #x
 #define __stringify(x) __stringify_inner(x)
@@ -64,25 +67,63 @@ __kernel void scan(__local rtype *len) {
   for (
     dtype d=N/2;
     __invariant(upsweep_d_offset),
+    __invariant(__uniform_int(offset)),
+    __invariant(__uniform_int(d)),
+    __invariant(__uniform_bool(__enabled())),
+#ifdef CHECK_RACE
+    __invariant(__no_write(len)),
+    __invariant(
+      __read_implies(result,
+        (offset > 1) &
+        (__read_offset(result)/sizeof(rtype) == ai_idx(div2(offset),tid) |
+         __read_offset(result)/sizeof(rtype) == bi_idx(div2(offset),tid)))
+    ),
+    __invariant(
+      __write_implies(result,
+        __ite(offset == 1,
+          __write_offset(result)/sizeof(rtype) == ai_idx(1,tid) |
+          __write_offset(result)/sizeof(rtype) == bi_idx(1,tid),
+          __write_offset(result)/sizeof(rtype) == bi_idx(div2(offset),tid)))
+    ),
+    __invariant(__implies(__read(result) & (offset == N), tid == 0)),
+    __invariant(__implies(__write(result) & (offset == N), tid == 0)),
+#endif
+#ifdef CHECK_BI
     __invariant(upsweep_barrier(tid,offset,result,len)),
+#endif
     d > 0;
     d >>= 1) {
+#ifdef CHECK_BI_ACCESS
+    upsweep_barrier_permissions(tid,offset,result,len)
+#endif
+#ifdef CHECK_BI
     __barrier_invariant(upsweep_barrier(tid,offset,result,len), tid, 2*tid, 2*tid+1);
+#endif
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
-      result[bi] += result[ai];
+#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+      result[bi] = nooverflow_add(result[ai], result[bi]);
+#else
+      result[bi] = raddf_primed(result[ai], result[bi]);
+#endif
     }
     offset <<= 1;
   }
+
+//__assert(offset == N);
+//__non_temporal(__assert(upsweep_barrier(tid,/*offset=*/N,result,len)));
 #elif INC_DOWNSWEEP
   offset = N;
-  __assume(upsweep_barrier(tid,/*offset=*/N,result,len));
+  __non_temporal(__assume(upsweep_barrier(tid,/*offset=*/N,result,len)));
+//__non_temporal(__assert(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)));
 #endif
 
 #ifdef INC_DOWNSWEEP
+#ifdef CHECK_BI
   __array_snapshot(ghostsum, result);
+#endif
 
   for (
     dtype d = 2;

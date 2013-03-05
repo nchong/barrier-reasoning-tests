@@ -19,6 +19,9 @@ def log2(x):
 def summation(terms,f):
   return reduce(lambda x,y: '%s(%s,%s)' % (f,x,y), terms)
 
+def read_permission(x):
+  return '__read_permission(%s)' % x
+
 def upsweep_pattern(N,rhs):
   terms = [ 'len[x]' ]
   def lhs(off):
@@ -27,7 +30,7 @@ def upsweep_pattern(N,rhs):
   for offset in [2**i for i in range(log2(N)+1)]:
     body.append('__implies(%s, %s)' % (lhs(offset), rhs(terms)))
     terms.append('result[left(x,%d)]' % (offset*2))
-  return '(' + ' & \\\n   '.join(body) + ')'
+  return '(' + ' & \\\n  '.join(body) + ')'
 
 def upsweep_core(N):
   return upsweep_pattern(N, lambda terms: 'result[x] == %s' % summation(reversed(terms), 'raddf'))
@@ -48,7 +51,7 @@ def upsweep_barrier(N):
   cases += [    gencase(d,offset,'>=','ai') for d,offset in zip(ds,offsets) ]
   cases.append( gencase(N/2,2,'<=','bi') )
   cases += [    gencase(d,offset,'==','bi') for d,offset in zip(ds,offsets) ]
-  return '(' + ' & \\\n   '.join(cases) + ')'
+  return '(' + ' & \\\n  '.join(cases) + ')'
 
 def upsweep_d_offset(N, include_loop_exit=True):
   offsets = [ 2**i for i in range(log2(N)) ]
@@ -57,6 +60,43 @@ def upsweep_d_offset(N, include_loop_exit=True):
     offsets += [N]
     ds += [0]
   return '(' + ' | '.join([ '(d == %d & offset == %d)' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
+
+def ghostreadvars(N):
+  offsets = [2**i for i in range(1, log2(N)+1)]
+  return [ 'ghostread%d' % offset for offset in offsets ]
+
+def upsweep_permissions(N):
+  def lhs(off):
+    return '(((offset == %d) && isvertex(x,offset)) || ((%d < offset) && stopped(x,%d)))' % (off,off,off)
+  def rhs(terms):
+    return '%s = true;' % ' = '.join(terms)
+  body = [ '%s = false;' % ' = '.join(ghostreadvars(N)) ]
+  terms = [ 'ghostread2' ]
+  offsets = [2**i for i in range(1, log2(N)+1)]
+  for offset in offsets:
+    body.append('if (%s) %s' % (lhs(offset), rhs(terms)))
+    terms.append('ghostread%d' % (offset*2))
+  body.append(read_permission('len[x]'))
+  body.append(read_permission('result[x]'))
+  for offset in offsets:
+    body.append('if (ghostread%s) %s' % (offset, read_permission('result[left(x,%d)]' % offset)))
+  return '{' + ' \\\n  '.join(body) + '}'
+
+def upsweep_barrier_permissions(N):
+  cases = []
+  cases.append('bool %s;' % ', '.join(ghostreadvars(N)))
+  def gencase(d,offset,rel,aibi):
+    idx = '%s_idx(%d,tid)' % (aibi,N/2/d)
+    rhs = 'upsweep_permissions(offset,result,len,%s)' % idx
+    return 'if ((tid < %d) && (offset %s %d)) %s' % (d,rel,offset,rhs)
+  ds = [ 2**i for i in reversed(range(log2(N)-1)) ]
+  offsets = [ 2**i for i in range(2,log2(N)+1) ]
+  assert len(ds) == len(offsets)
+  cases.append( gencase(N/2,1,'>=','ai') )
+  cases += [    gencase(d,offset,'>=','ai') for d,offset in zip(ds,offsets) ]
+  cases.append( gencase(N/2,2,'<=','bi') )
+  cases += [    gencase(d,offset,'==','bi') for d,offset in zip(ds,offsets) ]
+  return '{' + ' \\\n  '.join(cases) + '}'
 
 def foldright(f,xs,i):
   return reduce(lambda x,y: f(y,x), reversed(xs),i)
@@ -164,24 +204,19 @@ def final_downsweep_barrier(N,mul2shift=False):
   cases.append('__implies((tid < %d), downsweep(/*offset=*/2,result,ghostsum,lf_bi_idx(2,tid)))' % (N/2-1))
   return '(' + ' & \\\n   '.join(cases) + ')'
 
-def main(argv=None):
-  if argv is None:
-    argv = sys.argv
-  progname = argv[0]
-  if len(argv) != 2:
-    print 'error: need [N], number of elements'
-    return 1
-  N = int(argv[1])
+def genspec(N):
   if not ispow2(N):
     print 'error: [N] must be a power of two'
     return 1
   env = Environment(loader=PackageLoader('genspec', '.'))
   t = env.get_template('spec.template')
-  print t.render(N=N, NDIV2=N/2,
+  return t.render(N=N, NDIV2=N/2,
     upsweep_core=upsweep_core,
     upsweep_nooverflow=upsweep_nooverflow,
     upsweep_barrier=upsweep_barrier,
     upsweep_d_offset=upsweep_d_offset,
+    upsweep_permissions=upsweep_permissions,
+    upsweep_barrier_permissions=upsweep_barrier_permissions,
     ilog2=ilog2,
     downsweep_term=downsweep_term,
     downsweep_summation=downsweep_summation,
@@ -193,6 +228,16 @@ def main(argv=None):
     final_upsweep_barrier=final_upsweep_barrier,
     final_downsweep_barrier=final_downsweep_barrier,
   )
+
+def main(argv=None):
+  if argv is None:
+    argv = sys.argv
+  progname = argv[0]
+  if len(argv) != 2:
+    print 'error: need [N], number of elements'
+    return 1
+  N = int(argv[1])
+  print genspec(N)
 
 if __name__ == '__main__':
   sys.exit(main())
