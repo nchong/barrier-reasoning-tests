@@ -76,6 +76,7 @@ def upsweep_permissions(N):
   for offset in offsets:
     body.append('if (%s) %s' % (lhs(offset), rhs(terms)))
     terms.append('ghostread%d' % (offset*2))
+  body.append(read_permission('len[x]'))
   body.append(read_permission('result[x]'))
   for offset in offsets:
     body.append('if (ghostread%s) %s' % (offset, read_permission('result[left(x,%d)]' % offset)))
