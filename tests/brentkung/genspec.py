@@ -173,6 +173,29 @@ def downsweep_d_offset(N,include_loop_exit=True):
   offsets = [ x for x in reversed(ds) ]
   return '(' + ' | '.join([ '((d == %d) & (offset == %d))' % (d,offset) for d,offset in zip(ds,offsets) ]) + ')'
 
+def downsweep_permissions(N):
+  terms = [ 'result[x]' ]
+  terms.extend([ 'ghostsum[term(x,%d)]' % x for x in range(log2(N)-1) ])
+  body = [ read_permission(x) for x in terms ]
+  return '{' + ' \\\n  '.join(body) + '}'
+
+def downsweep_barrier_permissions(N):
+  def genrhs(aibi,f,offset):
+    idx = '%s_idx(%d,tid)' % (aibi,f(offset))
+    return 'downsweep_permissions(offset,result,ghostsum,%s)' % idx
+  def gencase(d,offset,rel,aibi,f=lambda offset:offset/2):
+    lhs = '(tid < %s) & (offset %s %d)' % (d,rel,offset)
+    rhs = genrhs(aibi,f,offset)
+    return 'if (%s) %s' % (lhs,rhs)
+  ds = [ 2**i for i in range(1,log2(N)) ]
+  offsets = [ x for x in reversed(ds) ]
+  cases =      [ gencase(d,offset,'>','ai')                  for d,offset in reversed(zip(ds,offsets)) ]
+  cases.append('if (tid < 1)                   downsweep_permissions(offset,result,ghostsum,ai_idx(div2(offset),tid))')
+  cases.append('if (tid < 1)                   %s' % genrhs('bi',lambda offset:offset/2,N))
+  cases.extend([ gencase(d-1,offset,'==','lf_ai',lambda x:x) for d,offset in          zip(ds,offsets)  ])
+  cases.extend([ gencase(d-1,offset,'==','lf_bi',lambda x:x) for d,offset in          zip(ds,offsets)  ])
+  return '{' + ' \\\n   '.join(cases) + '}'
+
 def upsweep_instantiation(N,elementwise=False):
   cases = [ 'tid', '(tid+1)' ]
   if elementwise: cases = [ 'x2t(tid)', '(x2t(tid)+1)' ]
@@ -224,6 +247,8 @@ def genspec(N):
     downsweep_nooverflow=downsweep_nooverflow,
     downsweep_barrier=downsweep_barrier,
     downsweep_d_offset=downsweep_d_offset,
+    downsweep_permissions=downsweep_permissions,
+    downsweep_barrier_permissions=downsweep_barrier_permissions,
     upsweep_instantiation=upsweep_instantiation,
     final_upsweep_barrier=final_upsweep_barrier,
     final_downsweep_barrier=final_downsweep_barrier,

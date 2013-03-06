@@ -128,13 +128,40 @@ __kernel void scan(__local rtype *len) {
   for (
     dtype d = 2;
     __invariant(downsweep_d_offset),
+    __invariant(__uniform_int(offset)),
+    __invariant(__uniform_int(d)),
+    __invariant(__uniform_bool(__enabled())),
+#ifdef CHECK_RACE
+    __invariant(__no_write(len)),
+    __invariant(__implies(__write(result) & (__write_offset(result)/sizeof(rtype) == (N-1)), tid == 0)),
+    __invariant(__implies(__read(result) & (offset == N), tid == 0)),
+    __invariant(__implies(__write(result) & (offset == N), 
+        (tid == 0) & (__write_offset(result)/sizeof(rtype) == (N-1)))
+    ),
+    __invariant(__implies(__read(result) & (offset < N),
+      __read_offset(result)/sizeof(rtype) == lf_ai_idx(offset,tid) |
+      __read_offset(result)/sizeof(rtype) == lf_bi_idx(offset,tid))
+    ),
+    __invariant(__implies(__write(result) & (offset < N),
+      __write_offset(result)/sizeof(rtype) == lf_ai_idx(offset,tid) |
+      __write_offset(result)/sizeof(rtype) == lf_bi_idx(offset,tid))
+    ),
+#endif
+#ifdef CHECK_BI
     __invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len)),
     __invariant(downsweep_barrier(tid,offset,result,ghostsum)),
+#endif
     d < N;
     d <<= 1) {
     offset >>= 1;
+#ifdef CHECK_BI_ACCESS
+    upsweep_barrier_permissions(tid,/*offset=*/N,ghostsum,len)
+    downsweep_barrier_permissions(tid,mul2(offset),result,ghostsum)
+#endif
+#ifdef CHECK_BI
     __barrier_invariant(upsweep_barrier(tid,/*offset=*/N,ghostsum,len), tid);
     __barrier_invariant(downsweep_barrier(tid,mul2(offset),result,ghostsum), tid, lf_ai_tid(tid), lf_bi_tid(tid)),
+#endif
     barrier(CLK_LOCAL_MEM_FENCE);
     if (t < (d - 1)) {
       dtype ai = (offset * (t + 1)) - 1;
