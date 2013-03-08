@@ -2,7 +2,8 @@ import getopt
 import subprocess
 import sys
 
-GPUVERIFY_INSTALL_DIR = '/Users/nafe/work/gpuverify/GPUVerifyInstall'
+#GPUVERIFY_INSTALL_DIR = '/Users/nafe/work/gpuverify/GPUVerifyInstall'
+GPUVERIFY_INSTALL_DIR = '/work/nyc04/regression/GPUVerifyInstall'
 SPECS_DIR  = 'specs'
 AXIOMS_DIR = 'axioms'
 KERNEL     = 'kernel.cl'
@@ -122,7 +123,7 @@ def buildcmd(checks,extraflags=[]):
   if Options.op == BINOP.ABS and CHECK.BI in checks:
     if PART.UPSWEEP in Options.parts: bpl = 'upsweep'
     elif PART.DOWNSWEEP in Options.parts: bpl = 'downsweep'
-    cmd.append('--boogie-file=%s/%s%d.bpl' % (AXIOMS_DIR,bpl,rwidth))
+    cmd.append('--boogie-file=%s/%s%d.bpl' % (AXIOMS_DIR,bpl,Options.width))
   cmd.extend(extraflags)
   cmd.append(Options.flags)
   cmd.append(KERNEL)
