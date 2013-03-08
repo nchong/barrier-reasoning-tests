@@ -2,8 +2,8 @@ import getopt
 import subprocess
 import sys
 
-#GPUVERIFY_INSTALL_DIR = '/Users/nafe/work/gpuverify/GPUVerifyInstall'
-GPUVERIFY_INSTALL_DIR = '/work/nyc04/regression/GPUVerifyInstall'
+GPUVERIFY_INSTALL_DIR = '/Users/nafe/work/gpuverify/GPUVerifyInstall'
+#GPUVERIFY_INSTALL_DIR = '/work/nyc04/regression/GPUVerifyInstall'
 SPECS_DIR  = 'specs'
 AXIOMS_DIR = 'axioms'
 KERNEL     = 'kernel.cl'
@@ -82,6 +82,7 @@ def main(doit,header=None,argv=None):
         return error('width must be an integer')
       if width not in [8,16,32]:
         return error('width must be one of 8, 16, 32')
+      Options.width = width
     if o == "--flags":
       Options.flags = a
     if o == '--upsweep':
