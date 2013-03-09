@@ -59,6 +59,8 @@ __axiom(get_num_groups(0) == 1);
   #define raddf_primed(x,y) __ite_rtype(x < y, y, x)
   #define ridentity 0
 #elif defined(BINOP_ABSTRACT)
+  DECLARE_UF_BINARY(A, rtype, rtype, rtype);
+  DECLARE_UF_BINARY(A1, rtype, rtype, rtype);
   #define raddf(x,y) A(x,y)
   #define raddf_primed(x,y) A1(x,y)
   #define ridentity 0
