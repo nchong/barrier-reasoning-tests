@@ -22,7 +22,11 @@ class CHECK(object):
 class PART(object):
   UPSWEEP   = 'INC_UPSWEEP'
   DOWNSWEEP = 'INC_DOWNSWEEP'
-  ENDSPEC   = 'INC_ENDSWEEP'
+  ENDSPEC   = 'INC_ENDSPEC'
+
+class SPEC(object):
+  THREAD  = 'SPEC_THREADWISE'
+  ELEMENT = 'SPEC_ELEMENTWISE'
 
 class Options(object):
   N = 4
@@ -31,6 +35,7 @@ class Options(object):
   verbose = False
   flags = ""
   parts = []
+  spec = SPEC.ELEMENT
 
 def ispow2(x):
   return x != 0 and ((x & (x-1)) == 0)
@@ -49,6 +54,7 @@ def help(progname,header=None):
   print '  --upsweep'
   print '  --downsweep'
   print '  --endspec'
+  print '  --spec=X'
   return 0
 
 def error(msg):
@@ -83,6 +89,11 @@ def main(doit,header=None,argv=None):
       if width not in [8,16,32]:
         return error('width must be one of 8, 16, 32')
       Options.width = width
+    if o == "--spec":
+      spec = a.lower()
+      if spec == 'element': Options.spec = SPEC.ELEMENT
+      elif spec == 'thread': Options.spec = SPEC.THREAD
+      else: return error('spec must be one of element, thread')
     if o == "--flags":
       Options.flags = a
     if o == '--upsweep':
@@ -116,9 +127,11 @@ def buildcmd(checks,extraflags=[]):
           '-I%s' % SPECS_DIR,
           '-DN=%d' % Options.N,
           '-D%s' % Options.op,
-          '-Ddwidth=%d' % Options.width,
+          '-Ddwidth=32',
           '-Drwidth=%d' % Options.width,
         ]
+  if PART.ENDSPEC in Options.parts:
+    cmd.append('-D%s' % Options.spec)
   cmd.extend(['-D%s' % x for x in Options.parts])
   cmd.extend(['-D%s' % x for x in checks])
   if Options.op == BINOP.ABS and CHECK.BI in checks:
