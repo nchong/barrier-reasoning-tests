@@ -36,6 +36,7 @@ class Options(object):
   flags = ""
   parts = []
   spec = SPEC.ELEMENT
+  boogie_file = None
 
 def ispow2(x):
   return x != 0 and ((x & (x-1)) == 0)
@@ -55,6 +56,7 @@ def help(progname,header=None):
   print '  --downsweep'
   print '  --endspec'
   print '  --spec=X'
+  print '  --boogie-file=X'
   return 0
 
 def error(msg):
@@ -65,10 +67,14 @@ def main(doit,header=None,argv=None):
   if argv is None:
     argv = sys.argv
   progname = argv[0]
-  opts, args = getopt.getopt(argv[1:],'h',
-    ['verbose','op=','width=','flags=',
-     'upsweep','downsweep','endspec',
-    ])
+  try:
+    opts, args = getopt.getopt(argv[1:],'h',
+      ['verbose','op=','width=','flags=',
+       'upsweep','downsweep','endspec',
+       'boogie-file=',
+      ])
+  except getopt.GetoptError:
+    return error('error parsing options; try -h')
   for o, a in opts:
     if o in ('-h','--help'):
       return help(progname,header)
@@ -80,7 +86,7 @@ def main(doit,header=None,argv=None):
       elif op == 'max':      Options.op = BINOP.MAX
       elif op == 'or':       Options.op = BINOP.OR
       elif op == 'abstract': Options.op = BINOP.ABS
-      else: return error('')
+      else: return error('operator [%s] not recognised' % a)
     if o == "--width":
       try:
         width = int(a)
@@ -102,6 +108,8 @@ def main(doit,header=None,argv=None):
       Options.parts.append(PART.DOWNSWEEP)
     if o == '--endspec':
       Options.parts.append(PART.ENDSPEC)
+    if o == '--boogie-file':
+      Options.boogie_file = a
   if len(args) != 1:
     return error('number of elements not specified')
   try:
@@ -112,8 +120,8 @@ def main(doit,header=None,argv=None):
     return error('n must be a power of two')
   if len(Options.parts) == 0:
     return error('specify parts to check')
-  if PART.ENDSPEC in Options.parts and Options.op == BINOP.ABS:
-    return error('endspec for abstract operator is not supported')
+ #if PART.ENDSPEC in Options.parts and Options.op == BINOP.ABS:
+ #  return error('endspec for abstract operator is not supported')
   doit()
   return 0
 
@@ -134,7 +142,9 @@ def buildcmd(checks,extraflags=[]):
     cmd.append('-D%s' % Options.spec)
   cmd.extend(['-D%s' % x for x in Options.parts])
   cmd.extend(['-D%s' % x for x in checks])
-  if Options.op == BINOP.ABS and CHECK.BI in checks:
+  if Options.boogie_file:
+    cmd.append('--boogie-file=%s' % Options.boogie_file)
+  elif Options.op == BINOP.ABS and CHECK.BI in checks:
     if PART.UPSWEEP in Options.parts: bpl = 'upsweep'
     elif PART.DOWNSWEEP in Options.parts: bpl = 'downsweep'
     cmd.append('--boogie-file=%s/%s%d.bpl' % (AXIOMS_DIR,bpl,Options.width))
