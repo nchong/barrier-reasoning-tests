@@ -106,7 +106,7 @@ __axiom(get_num_groups(0) == 1);
 #define upsweep_core(offset,result,len,x) \
   {{upsweep_core(N)}}
 
-#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+#if defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
 #define upsweep_nooverflow(offset,result,len,x) \
   {{upsweep_nooverflow(N)}}
 
@@ -141,7 +141,7 @@ __axiom(get_num_groups(0) == 1);
 #define downsweep_core(offset,result,ghostsum,x) \
   {{downsweep_core(N)}}
 
-#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+#if defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
 #define downsweep_nooverflow(offset,result,ghostsum,x) \
   {{downsweep_nooverflow(N)}}
 

@@ -100,7 +100,7 @@ __kernel void prescan(__local rtype *len) {
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
-#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+#if defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
       result[bi] = nooverflow_add(result[ai], result[bi]);
 #else
       result[bi] = raddf_primed(result[ai], result[bi]);
@@ -170,7 +170,7 @@ __kernel void prescan(__local rtype *len) {
       dtype bi = offset * (2 * t + 2) - 1;
       rtype temp = result[ai];
       result[ai] = result[bi];
-#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+#if defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
       result[bi] = nooverflow_add(result[bi], temp);
 #else
       result[bi] = raddf(result[bi], temp);
