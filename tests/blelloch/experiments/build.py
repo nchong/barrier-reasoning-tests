@@ -37,6 +37,8 @@ class Options(object):
   parts = []
   spec = SPEC.ELEMENT
   boogie_file = None
+  timeout = 3600 # seconds
+  relentless = False
 
 def ispow2(x):
   return x != 0 and ((x & (x-1)) == 0)
@@ -57,6 +59,8 @@ def help(progname,header=None):
   print '  --endspec'
   print '  --spec=X'
   print '  --boogie-file=X'
+  print '  --timeout=X'
+  print '  --relentless'
   return 0
 
 def error(msg):
@@ -71,7 +75,7 @@ def main(doit,header=None,argv=None):
     opts, args = getopt.getopt(argv[1:],'h',
       ['verbose','op=','width=','flags=',
        'upsweep','downsweep','endspec',
-       'boogie-file=',
+       'boogie-file=','timeout=','relentless',
       ])
   except getopt.GetoptError:
     return error('error parsing options; try -h')
@@ -110,6 +114,13 @@ def main(doit,header=None,argv=None):
       Options.parts.append(PART.ENDSPEC)
     if o == '--boogie-file':
       Options.boogie_file = a
+    if o == '--timeout':
+      try:
+        Options.timeout = int(a)
+      except ValueError:
+        return error('bad timeout [%s] given' % a)
+    if o == "--relentless":
+      Options.relentless = True
   if len(args) != 1:
     return error('number of elements not specified')
   try:
@@ -122,8 +133,12 @@ def main(doit,header=None,argv=None):
     return error('specify parts to check')
  #if PART.ENDSPEC in Options.parts and Options.op == BINOP.ABS:
  #  return error('endspec for abstract operator is not supported')
-  doit()
-  return 0
+  code = doit()
+  if Options.relentless: # keep going for more!
+    while code == 0:
+      Options.N = 2 * Options.N
+      code = doit()
+  return code
 
 def buildcmd(checks,extraflags=[]):
   cmd = [ GPUVERIFY_INSTALL_DIR + '/gpuverify',
@@ -132,6 +147,7 @@ def buildcmd(checks,extraflags=[]):
           '--no-infer',
           '--no-source-loc-infer',
           '--only-intra-group',
+          '--timeout=%d' % Options.timeout,
           '-I%s' % SPECS_DIR,
           '-DN=%d' % Options.N,
           '-D%s' % Options.op,
@@ -155,8 +171,8 @@ def buildcmd(checks,extraflags=[]):
 
 def run(cmd):
   if Options.verbose: print ' '.join(cmd)
-  subprocess.call(cmd)
+  return subprocess.call(cmd)
 
 def build_and_run(checks,extraflags=[]):
   cmd = buildcmd(checks,extraflags)
-  run(cmd)
+  return run(cmd)
