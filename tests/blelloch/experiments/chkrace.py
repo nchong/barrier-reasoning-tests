@@ -6,7 +6,7 @@ import sys
 header = 'Only race-checking'
 
 def doit():
-  build_and_run([CHECK.RACE])
+  return build_and_run([CHECK.RACE])
 
 if __name__ == '__main__':
   sys.exit(main(doit,header))
