@@ -1,21 +1,21 @@
-#define N 8
+#ifndef N
+  #error Must define N
+#endif
 
 #define tid get_local_id(0)
 #define other_tid __other_int(tid)
 
-__kernel void qsort(__global int *A, unsigned int i, unsigned int j, __global unsigned int *next_pivot) {
-  __local unsigned int flag[N];
-  __local unsigned int scan[N];
-  __local unsigned int prescan[N];
-  unsigned int nleft;
-  unsigned int idx;
-
-  if (j - i < 2) return;
+__kernel void qsort(__global int *A, unsigned i, unsigned j, __global unsigned *next_pivot) {
+  __local unsigned flag[N];
+  __local unsigned scan[N];
+  __local unsigned prescan[N];
+  unsigned nleft;
+  unsigned idx;
 
   int pivot = A[i];
   int val = A[tid];
   flag[tid] = val < pivot;
-  bool inrange = (i < tid) && (tid < j);
+  bool inrange = (i <= tid) && (tid <= j);
 
   // hillis-steele scan (inclusive prefix sum)
   int temp;
@@ -48,7 +48,7 @@ __kernel void qsort(__global int *A, unsigned int i, unsigned int j, __global un
   // partition
   if (inrange) {
     if (flag[tid]) idx = i + prescan[tid];
-    else           idx = i + nleft + tid - prescan[tid];
+    else           idx = i + nleft + (tid-i) - prescan[tid];
     A[idx] = val;
   }
   if (tid == i) {
