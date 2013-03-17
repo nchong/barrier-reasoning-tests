@@ -9,10 +9,10 @@ __axiom(blockDim.x == {{NDIV2}});
 #endif
 __axiom(gridDim.x == 1);
 #elif defined(__OPENCL_VERSION__)
-__axiom(get_local_size(0) == {{NDIV2}});
 #if defined(INC_ENDSPEC) && defined(SPEC_ELEMENTWISE)
 __axiom(get_local_size(0) == {{N}});
 #else
+__axiom(get_local_size(0) == {{NDIV2}});
 #endif
 __axiom(get_num_groups(0) == 1);
 #else
