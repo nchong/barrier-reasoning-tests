@@ -150,7 +150,8 @@ def main(doit,header=None,argv=None):
 
 def buildcmd(checks,extraflags=[]):
   cmd = [ GPUVERIFY_INSTALL_DIR + '/gpuverify',
-          '--time',
+          '--silent',
+          '--time-as-csv=%d' % Options.N,
           '--testsuite',
           '--no-infer',
           '--no-source-loc-infer',
