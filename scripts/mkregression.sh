@@ -42,6 +42,7 @@ for ((N=4; N<=2048; N*=2)); do
 done
 echo done
 
+populate ${DIR_BLELLOCH} race_biaccess
 for op in add max or abstract; do
   for part in upsweep downsweep endspec; do
     for width in 32 16 8; do
@@ -66,6 +67,7 @@ for ((N=4; N<=2048; N*=2)); do
 done
 echo done
 
+populate ${DIR_BRENTKUNG} race_biaccess
 for op in add max or abstract; do
   for part in downsweep endspec; do
     for width in 32 16 8; do
