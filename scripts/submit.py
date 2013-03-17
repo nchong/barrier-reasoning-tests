@@ -4,6 +4,7 @@ import os
 import chkall
 import chkbi
 import chkrace_biaccess
+import sys
 
 cwd = os.getcwd().split(os.sep)[-1]
 print cwd
@@ -21,5 +22,9 @@ else: # otherwise blelloch or brentkung subdirectory
   assert width in [ 8,16,32 ]
   args = [ 'dummy', '--op=%s' % op, '--%s' % part, '--width=%d' % width, '--relentless', '4' ]
   main = chkbi.main_wrapper
-  
+  if os.environ.get('CHKALL'):
+    print "Forcing check all"
+    main = chkall.main_wrapper
+
+sys.stdout.flush()
 main(args)
