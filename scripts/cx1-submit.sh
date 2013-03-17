@@ -34,7 +34,7 @@ qsub -v TAG=${TAG},TEST=brentkung,PATTERN=or-endspec-*,RUN=${RUN} cx1.sh
 qsub -v TAG=${TAG},TEST=brentkung,PATTERN=max-endspec-*,RUN=${RUN} cx1.sh
 qsub -v TAG=${TAG},TEST=.,PATTERN=hillis-steele,RUN=${RUN} cx1.sh
 
-if [ -z ${ALL} ]; then
+if [ "${ALL}" == "1" ]; then
   qsub -v CHKALL=1,TAG=${TAG},TEST=all-blelloch,PATTERN=add-upsweep-*,RUN=${RUN} cx1.sh
   qsub -v CHKALL=1,TAG=${TAG},TEST=all-blelloch,PATTERN=or-upsweep-*,RUN=${RUN} cx1.sh
   qsub -v CHKALL=1,TAG=${TAG},TEST=all-blelloch,PATTERN=max-upsweep-*,RUN=${RUN} cx1.sh

@@ -22,7 +22,7 @@ function populate() {
 }
 
 # TAG TOP-LEVEL
-if [ -z ${TAG} ]; then
+if [ -z "${TAG}" ]; then
   echo "Please give TAG directory, like this"
   echo "  TAG=<name> $0"
   exit 1
@@ -88,7 +88,7 @@ cd hillis-steele
 populate ${DIR_HILLISSTEELE} .
 cd -
 
-if [ -z ${ALL} ]; then
+if [ "${ALL}" == "1" ]; then
   # ALL-BLELLOCH
   echo ALL-BLELLOCH
   mkdir -p all-blelloch
