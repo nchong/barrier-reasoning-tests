@@ -1,14 +1,14 @@
-#ifndef N
-  #error Must define N
+#ifndef NUM
+  #error Must define NUM
 #endif
 
 #define tid get_local_id(0)
 #define other_tid __other_int(tid)
 
 __kernel void qsort(__global int *A, unsigned i, unsigned j, __global unsigned *next_pivot) {
-  __local unsigned flag[N];
-  __local unsigned scan[N];
-  __local unsigned prescan[N];
+  __local unsigned flag[NUM];
+  __local unsigned scan[NUM];
+  __local unsigned prescan[NUM];
   unsigned nleft;
   unsigned idx;
 
@@ -42,7 +42,7 @@ __kernel void qsort(__global int *A, unsigned i, unsigned j, __global unsigned *
   if (tid >  16) scan[tid] += temp;
   barrier(CLK_LOCAL_MEM_FENCE);
   // turn into prescan (exclusive prefix sum)
-  nleft = scan[N-1];
+  nleft = scan[NUM-1];
   prescan[tid] = tid == 0 ? 0 : scan[tid-1];
 
   // partition
