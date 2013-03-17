@@ -27,7 +27,7 @@ void print_state(int *A, unsigned left, unsigned right, int next_pivot) {
 
 int main(int, char **) {
   // platform info
-  std::cout << clinfo();
+  std::cout << clinfo() << std::endl;
 
   // test data
   size_t ArraySize = N * sizeof(int);
@@ -37,7 +37,7 @@ int main(int, char **) {
   for (unsigned i=0; i<N; ++i) {
     A[i] = distribution(generator);
   }
-  printf("INITIAL STATE\n");
+  std::cout << "INITIAL STATE" << std::endl;
   print_state(A,0,N-1);
 
   // initialise for device 0 on platform 0, with profiling off
@@ -50,7 +50,7 @@ int main(int, char **) {
   // compile the OpenCL code
   const char *filename = "kernel.cl";
   std::stringstream ss;
-  ss << "-DN=" << N;
+  ss << "-DNUM=" << N;
   cl_program program = clw.compile(filename,ss.str().c_str());
 
   // get kernel handle
