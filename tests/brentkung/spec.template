@@ -13,7 +13,6 @@ __axiom(get_local_size(0) == {{NDIV2}});
 #if defined(INC_ENDSPEC) && defined(SPEC_ELEMENTWISE)
 __axiom(get_local_size(0) == {{N}});
 #else
-__axiom(get_local_size(0) == {{NDIV2}});
 #endif
 __axiom(get_num_groups(0) == 1);
 #else
