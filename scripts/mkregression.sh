@@ -13,8 +13,8 @@ function populate() {
     mkdir -p ${TO}
   fi
   ln -f -s ${FR}/kernel.cl ${TO}
-  if [ -e ../specs ]; then
-    ln -f -s ../specs ${TO}
+  if [ -e `pwd`/specs ]; then
+    ln -f -s `pwd`/specs ${TO}
   fi
   if [ -e ${FR}/axioms ]; then
     ln -f -s ${FR}/axioms ${TO}
