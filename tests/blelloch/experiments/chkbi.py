@@ -10,5 +10,8 @@ def doit():
   extraflags = ['--no-barrier-access-checks','--only-divergence','--asymmetric-asserts']
   return build_and_run(checks,extraflags)
 
+def main_wrapper(argv):
+  main(doit,header,argv)
+
 if __name__ == '__main__':
   sys.exit(main(doit,header))

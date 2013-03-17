@@ -1,9 +1,9 @@
 import getopt
 import subprocess
 import sys
+import os
 
-GPUVERIFY_INSTALL_DIR = '/Users/nafe/work/gpuverify/GPUVerifyInstall'
-#GPUVERIFY_INSTALL_DIR = '/work/nyc04/regression/GPUVerifyInstall'
+GPUVERIFY_INSTALL_DIR = os.environ.get('GPUVERIFY_INSTALL_DIR')
 SPECS_DIR  = 'specs'
 AXIOMS_DIR = 'axioms'
 KERNEL     = 'kernel.cl'
@@ -39,6 +39,7 @@ class Options(object):
   boogie_file = None
   timeout = 3600 # seconds
   relentless = False
+  mkbpl = False
 
 def ispow2(x):
   return x != 0 and ((x & (x-1)) == 0)
@@ -61,6 +62,7 @@ def help(progname,header=None):
   print '  --boogie-file=X'
   print '  --timeout=X'
   print '  --relentless'
+  print '  --stop-at-bpl'
   return 0
 
 def error(msg):
@@ -73,9 +75,11 @@ def main(doit,header=None,argv=None):
   progname = argv[0]
   try:
     opts, args = getopt.getopt(argv[1:],'h',
-      ['verbose','op=','width=','flags=',
+      ['verbose','help',
+       'op=','width=','flags=',
        'upsweep','downsweep','endspec',
        'boogie-file=','timeout=','relentless',
+       'spec=','stop-at-bpl',
       ])
   except getopt.GetoptError:
     return error('error parsing options; try -h')
@@ -114,6 +118,8 @@ def main(doit,header=None,argv=None):
       Options.parts.append(PART.ENDSPEC)
     if o == '--boogie-file':
       Options.boogie_file = a
+    if o == '--stop-at-bpl':
+      Options.mkbpl = True
     if o == '--timeout':
       try:
         Options.timeout = int(a)
@@ -121,6 +127,8 @@ def main(doit,header=None,argv=None):
         return error('bad timeout [%s] given' % a)
     if o == "--relentless":
       Options.relentless = True
+  if not GPUVERIFY_INSTALL_DIR:
+    return error('Could not find GPUVERIFY_INSTALL_DIR environment variable')
   if len(args) != 1:
     return error('number of elements not specified')
   try:
@@ -166,12 +174,26 @@ def buildcmd(checks,extraflags=[]):
     cmd.append('--boogie-file=%s/%s%d.bpl' % (AXIOMS_DIR,bpl,Options.width))
   cmd.extend(extraflags)
   cmd.append(Options.flags)
+  if Options.mkbpl: cmd.append('--stop-at-bpl')
   cmd.append(KERNEL)
   return cmd
 
+def fname(suffix):
+  def aux(x): return x.split('_')[1].lower()
+  op = aux(Options.op)
+  part = '_'.join([aux(x) for x in Options.parts])
+  if Options.width == 32: ty = 'uint'
+  elif Options.width == 16: ty = 'ushort'
+  elif Options.width == 8: ty = 'uchar'
+  else: assert False
+  return '%04d-%s-%s-%s.%s' % (Options.N,op,part,ty,suffix)
+
 def run(cmd):
   if Options.verbose: print ' '.join(cmd)
-  return subprocess.call(cmd)
+  code = subprocess.call(cmd)
+  if code == 0 and Options.mkbpl:
+    os.rename('kernel.bpl', fname('bpl'))
+  return code
 
 def build_and_run(checks,extraflags=[]):
   cmd = buildcmd(checks,extraflags)
