@@ -88,26 +88,28 @@ cd hillis-steele
 populate ${DIR_HILLISSTEELE} .
 cd -
 
-# ALL-BLELLOCH
-# echo ALL-BLELLOCH
-# mkdir -p all-blelloch
-# cd all-blelloch
-# mkdir -p specs
-# echo -n Creating blelloch specifications...
-# for ((N=4; N<=2048; N*=2)); do
-#   python ${DIR_BLELLOCH}/genspec.py ${N} > specs/${N}_spec.h;
-# done
-# echo done
-#
-# for op in add max or abstract; do
-#   for part in upsweep downsweep endspec; do
-#     for width in 32 16 8; do
-#       if [[ "${op}" == "abstract" && "${part}" == "endspec" ]]; then
-#         continue;
-#       fi
-#       DIR=${op}-${part}-bv${width}
-#       populate ${DIR_BLELLOCH} ${DIR}
-#     done
-#   done
-# done
-# cd -
+if [ -z ${ALL} ]; then
+  # ALL-BLELLOCH
+  echo ALL-BLELLOCH
+  mkdir -p all-blelloch
+  cd all-blelloch
+  mkdir -p specs
+  echo -n Creating blelloch specifications...
+  for ((N=4; N<=2048; N*=2)); do
+    python ${DIR_BLELLOCH}/genspec.py ${N} > specs/${N}_spec.h;
+  done
+  echo done
+
+  for op in add max or abstract; do
+    for part in upsweep downsweep endspec; do
+      for width in 32 16 8; do
+        if [[ "${op}" == "abstract" && "${part}" == "endspec" ]]; then
+          continue;
+        fi
+        DIR=${op}-${part}-bv${width}
+        populate ${DIR_BLELLOCH} ${DIR}
+      done
+    done
+  done
+  cd -
+fi
