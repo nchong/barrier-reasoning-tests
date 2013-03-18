@@ -45,7 +45,7 @@ echo done
 populate ${DIR_BLELLOCH} race_biaccess
 for op in add max or abstract; do
   for part in upsweep downsweep endspec; do
-    for width in 32 16 8; do
+    for width in 32 16 08; do
       if [[ "${op}" == "abstract" && "${part}" == "endspec" ]]; then
         continue;
       fi
@@ -70,7 +70,7 @@ echo done
 populate ${DIR_BRENTKUNG} race_biaccess
 for op in add max or abstract; do
   for part in downsweep endspec; do
-    for width in 32 16 8; do
+    for width in 32 16 08; do
       if [[ "${op}" == "abstract" && "${part}" == "endspec" ]]; then
         continue;
       fi
@@ -102,7 +102,7 @@ if [ "${ALL}" == "1" ]; then
 
   for op in add max or abstract; do
     for part in upsweep downsweep endspec; do
-      for width in 32 16 8; do
+      for width in 32 16 08; do
         if [[ "${op}" == "abstract" && "${part}" == "endspec" ]]; then
           continue;
         fi
