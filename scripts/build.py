@@ -37,6 +37,7 @@ class Options(object):
   parts = []
   spec = SPEC.ELEMENT
   boogie_file = None
+  memout = 32000 # megabytes
   timeout = 3600 # seconds
   relentless = False
   mkbpl = False
@@ -60,6 +61,7 @@ def help(progname,header=None):
   print '  --endspec'
   print '  --spec=X'
   print '  --boogie-file=X'
+  print '  --memout=X'
   print '  --timeout=X'
   print '  --relentless'
   print '  --stop-at-bpl'
@@ -120,6 +122,11 @@ def main(doit,header=None,argv=None):
       Options.boogie_file = a
     if o == '--stop-at-bpl':
       Options.mkbpl = True
+    if o == '--memout':
+      try:
+        Options.memout = int(a)
+      except ValueError:
+        return error('bad memout [%s] given' % a)
     if o == '--timeout':
       try:
         Options.timeout = int(a)
@@ -163,6 +170,8 @@ def buildcmd(checks,extraflags=[]):
           '-Ddwidth=32',
           '-Drwidth=%d' % Options.width,
         ]
+  if Options.memout > 0:
+    cmd.append('--memout=%d' % Options.memout)
   if PART.ENDSPEC in Options.parts:
     cmd.append('-D%s' % Options.spec)
   cmd.extend(['-D%s' % x for x in Options.parts])
