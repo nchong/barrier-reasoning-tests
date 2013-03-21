@@ -4,7 +4,6 @@ import sys
 import os
 
 GPUVERIFY_INSTALL_DIR = os.environ.get('GPUVERIFY_INSTALL_DIR')
-SPECS_DIR  = 'specs'
 AXIOMS_DIR = 'axioms'
 KERNEL     = 'kernel.cl'
 
@@ -42,6 +41,7 @@ class Options(object):
   relentless = False
   repeat = 0
   mkbpl = False
+  specs_dir = 'specs'
 
 def ispow2(x):
   return x != 0 and ((x & (x-1)) == 0)
@@ -61,6 +61,7 @@ def help(progname,header=None):
   print '  --downsweep'
   print '  --endspec'
   print '  --spec=X'
+  print '  --specs-dir=X'
   print '  --boogie-file=X'
   print '  --memout=X'
   print '  --timeout=X'
@@ -83,7 +84,7 @@ def main(doit,header=None,argv=None):
        'op=','width=','flags=',
        'upsweep','downsweep','endspec',
        'boogie-file=','memout=','timeout=','relentless','repeat=',
-       'spec=','stop-at-bpl',
+       'spec=','stop-at-bpl', 'specs-dir=',
       ])
   except getopt.GetoptError:
     return error('error parsing options; try -h')
@@ -136,6 +137,8 @@ def main(doit,header=None,argv=None):
         return error('bad timeout [%s] given' % a)
     if o == "--relentless":
       Options.relentless = True
+    if o == "--specs-dir":
+      Options.specs_dir = a
     if o == "--repeat":
       try:
         Options.repeat = int(a)
@@ -174,7 +177,7 @@ def buildcmd(checks,extraflags=[]):
           '--no-source-loc-infer',
           '--only-intra-group',
           '--timeout=%d' % Options.timeout,
-          '-I%s' % SPECS_DIR,
+          '-I%s' % Options.specs_dir,
           '-DN=%d' % Options.N,
           '-D%s' % Options.op,
           '-Ddwidth=32',
