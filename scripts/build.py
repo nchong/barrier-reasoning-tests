@@ -39,6 +39,7 @@ class Options(object):
   memout = 32000 # megabytes
   timeout = 3600 # seconds
   relentless = False
+  repeat = 0
   mkbpl = False
   specs_dir = 'specs'
 
@@ -65,6 +66,7 @@ def help(progname,header=None):
   print '  --memout=X'
   print '  --timeout=X'
   print '  --relentless'
+  print '  --repeat='
   print '  --stop-at-bpl'
   return 0
 
@@ -81,8 +83,8 @@ def main(doit,header=None,argv=None):
       ['verbose','help',
        'op=','width=','flags=',
        'upsweep','downsweep','endspec',
-       'boogie-file=','timeout=','relentless',
-       'spec=','stop-at-bpl','specs-dir=',
+       'boogie-file=','memout=','timeout=','relentless','repeat=',
+       'spec=','stop-at-bpl', 'specs-dir=',
       ])
   except getopt.GetoptError:
     return error('error parsing options; try -h')
@@ -137,6 +139,11 @@ def main(doit,header=None,argv=None):
       Options.relentless = True
     if o == "--specs-dir":
       Options.specs_dir = a
+    if o == "--repeat":
+      try:
+        Options.repeat = int(a)
+      except ValueError:
+        return error('bad repeat [%s] given' % a)
   if not GPUVERIFY_INSTALL_DIR:
     return error('Could not find GPUVERIFY_INSTALL_DIR environment variable')
   if len(args) != 1:
@@ -156,6 +163,9 @@ def main(doit,header=None,argv=None):
     while code == 0:
       Options.N = 2 * Options.N
       code = doit()
+  while code == 0 and Options.repeat > 0:
+    Options.repeat -= 1
+    code = doit()
   return code
 
 def buildcmd(checks,extraflags=[]):
