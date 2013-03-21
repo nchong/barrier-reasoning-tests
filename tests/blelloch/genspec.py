@@ -29,11 +29,17 @@ def upsweep_pattern(N,rhs):
   body = []
   for offset in [2**i for i in range(log2(N)+1)]:
     body.append('__implies(%s, %s)' % (lhs(offset), rhs(terms)))
-    terms.append('result[left(x,%d)]' % (offset*2))
+    terms.append('result[x-%d]' % (offset))
   return '(' + ' & \\\n  '.join(body) + ')'
 
 def upsweep_core(N):
-  return upsweep_pattern(N, lambda terms: 'result[x] == %s' % summation(reversed(terms), 'raddf'))
+ #return upsweep_pattern(N, lambda terms: 'result[x] == %s' % summation(reversed(terms), 'raddf'))
+  offsets = [ 2**i for i in range(1, log2(N)+1) ]
+  def term(offset):
+    return '__ite_rtype((offset >= %d) & isvertex(x,%d), result[x-%d], ridentity)' % (offset,offset,offset/2)
+  terms = ['len[x]']
+  terms.extend([ term(offset) for offset in offsets ])
+  return 'result[x] == %s' % summation(reversed(terms), 'raddf')
 
 def upsweep_nooverflow(N):
   return upsweep_pattern(N, lambda terms: '__add_noovfl(%s)' % ', '.join(terms))
