@@ -37,7 +37,7 @@ class Options(object):
   parts = []
   spec = SPEC.ELEMENT
   boogie_file = None
-  memout = 32000 # megabytes
+  memout = 8000 # megabytes
   timeout = 3600 # seconds
   relentless = False
   repeat = 0
@@ -168,7 +168,7 @@ def main(doit,header=None,argv=None):
 def buildcmd(checks,extraflags=[]):
   cmd = [ GPUVERIFY_INSTALL_DIR + '/gpuverify',
           '--silent',
-          '--time-as-csv=%d' % Options.N,
+          '--time-as-csv=%s' % fname(),
           '--testsuite',
           '--no-infer',
           '--no-source-loc-infer',
@@ -198,15 +198,17 @@ def buildcmd(checks,extraflags=[]):
   cmd.append(KERNEL)
   return cmd
 
-def fname(suffix):
+def fname(suffix=None):
   def aux(x): return x.split('_')[1].lower()
   op = aux(Options.op)
   part = '_'.join([aux(x) for x in Options.parts])
+  if part == 'upsweep_downsweep': part = 'race-biacc'
   if Options.width == 32: ty = 'uint'
   elif Options.width == 16: ty = 'ushort'
   elif Options.width == 8: ty = 'uchar'
   else: assert False
-  return '%04d-%s-%s-%s.%s' % (Options.N,op,part,ty,suffix)
+  if suffix: return '%04d-%s-%s-%s.%s' % (Options.N,op,part,ty,suffix)
+  else: return '%04d-%s-%s-%s' % (Options.N,op,part,ty)
 
 def run(cmd):
   if Options.verbose: print ' '.join(cmd)
