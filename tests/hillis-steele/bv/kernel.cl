@@ -27,7 +27,7 @@ __kernel void scan(__global int *input, __global int *output) {
   barrier(CLK_LOCAL_MEM_FENCE);
 
   int temp;
-  int ghosttemp;
+  long int ghosttemp;
 
   for (int offset = 1;
         __invariant(__no_read(output)), __invariant(__no_write(output)),
