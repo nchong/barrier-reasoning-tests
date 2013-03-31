@@ -1,0 +1,237 @@
+type {:datatype} ptr;
+type arrayId;
+function {:constructor} MKPTR(base: arrayId, offset: bv32) : ptr;
+function PTR_LT(lhs: ptr, rhs: ptr) : bool;
+
+var {:global} $$input : [bv32]bv32;
+var {:race_checking} _READ_HAS_OCCURRED_$$input : bool;
+var {:race_checking} _WRITE_HAS_OCCURRED_$$input : bool;
+var {:race_checking} {:elem_width 32} _READ_OFFSET_$$input : bv32;
+var {:race_checking} {:elem_width 32} _WRITE_OFFSET_$$input : bv32;
+var {:check_access} _NOT_ACCESSED_$$input : bv32;
+const unique $arrayId$$input : arrayId;
+
+var {:global} $$output : [bv32]bv32;
+var {:race_checking} _READ_HAS_OCCURRED_$$output : bool;
+var {:race_checking} _WRITE_HAS_OCCURRED_$$output : bool;
+var {:race_checking} {:elem_width 32} _READ_OFFSET_$$output : bv32;
+var {:race_checking} {:elem_width 32} _WRITE_OFFSET_$$output : bv32;
+var {:check_access} _NOT_ACCESSED_$$output : bv32;
+const unique $arrayId$$output : arrayId;
+
+var $$__read_permission_temp : [bv32]ptr;
+const unique $arrayId$$__read_permission_temp : arrayId;
+
+var $$__read_permission_temp228 : [bv32]ptr;
+const unique $arrayId$$__read_permission_temp228 : arrayId;
+
+var {:group_shared} $$scan.sum : [bv32]bv32;
+var {:race_checking} _READ_HAS_OCCURRED_$$scan.sum : bool;
+var {:race_checking} _WRITE_HAS_OCCURRED_$$scan.sum : bool;
+var {:race_checking} {:elem_width 32} _READ_OFFSET_$$scan.sum : bv32;
+var {:race_checking} {:elem_width 32} _WRITE_OFFSET_$$scan.sum : bv32;
+const unique $arrayId$$scan.sum : arrayId;
+
+var {:group_shared} $$scan.ghostsum : [bv32]{{abstract_type}};
+var {:race_checking} _READ_HAS_OCCURRED_$$scan.ghostsum : bool;
+var {:race_checking} _WRITE_HAS_OCCURRED_$$scan.ghostsum : bool;
+var {:race_checking} {:elem_width {{width}}} _READ_OFFSET_$$scan.ghostsum : bv32;
+var {:race_checking} {:elem_width {{width}}} _WRITE_OFFSET_$$scan.ghostsum : bv32;
+const unique $arrayId$$scan.ghostsum : arrayId;
+function {:bvbuiltin "bvor"}   ABSTRACT_ADD({{abstract_type}}, {{abstract_type}}) : {{abstract_type}};
+function {:bvbuiltin "bvshl"}  SHL({{abstract_type}}, {{abstract_type}}) : {{abstract_type}};
+function {:bvbuiltin "bvsub"}  SUB({{abstract_type}}, {{abstract_type}}) : {{abstract_type}};
+function {:bvbuiltin "bvand"}  AND({{abstract_type}}, {{abstract_type}}) : {{abstract_type}};
+function {:bvbuiltin "bvlshr"} SHR({{abstract_type}}, {{abstract_type}}) : {{abstract_type}};
+{% if width == 32 -%}
+  function ZEXT(x:bv32) : {{abstract_type}} { x }
+{%- else -%}
+  function {:bvbuiltin "zero_extend {{width - 32}}"} ZEXT(bv32) : {{abstract_type}};
+{%- endif %}
+function bitrange(a:bv32, b:bv32) : {{abstract_type}} {
+  SHL(SUB(SHL(1{{abstract_type}}, ZEXT(BV32_ADD(BV32_SUB(b,a),1bv32))), 1{{abstract_type}}), ZEXT(a))
+}
+
+const unique $arrayId$$null : arrayId;
+
+const {:group_size_x} group_size_x : bv32;
+const {:group_size_y} group_size_y : bv32;
+const {:group_size_z} group_size_z : bv32;
+const {:local_id_x} local_id_x : bv32;
+const {:num_groups_x} num_groups_x : bv32;
+const {:num_groups_y} num_groups_y : bv32;
+const {:num_groups_z} num_groups_z : bv32;
+function BV32_TO_PTR(bv32) : ptr;
+function __other_bv32(bv32) : bv32;
+function {:bvbuiltin "bvadd"} BV32_ADD(bv32, bv32) : bv32;
+function {:bvbuiltin "bvadd"} BV33_ADD(bv33, bv33) : bv33;
+function {:bvbuiltin "bvand"} BV32_AND(bv32, bv32) : bv32;
+function {:bvbuiltin "bvmul"} BV32_MUL(bv32, bv32) : bv32;
+function {:bvbuiltin "bvshl"} BV32_SHL(bv32, bv32) : bv32;
+function {:bvbuiltin "bvsle"} BV32_SLE(bv32, bv32) : bool;
+function {:bvbuiltin "bvslt"} BV32_SLT(bv32, bv32) : bool;
+function {:bvbuiltin "bvsub"} BV32_SUB(bv32, bv32) : bv32;
+function {:bvbuiltin "bvuge"} BV32_UGE(bv32, bv32) : bool;
+function {:bvbuiltin "bvule"} BV32_ULE(bv32, bv32) : bool;
+function {:bvbuiltin "bvult"} BV32_ULT(bv32, bv32) : bool;
+function {:bvbuiltin "bvxor"} BV1_XOR(bv1, bv1) : bv1;
+function {:bvbuiltin "zero_extend 31"} BV1_ZEXT32(bv1) : bv32;
+procedure {:inline 1} $__add_noovfl_signed_32(x : bv32, y : bv32) returns (z : bv32) {
+  assume BV33_ADD(0bv1++x, 0bv1++y)[33:32] == 0bv1;
+  assume x[32:31] == y[32:31] ==> BV32_ADD(x, y)[32:31] == x[32:31];
+  z := BV32_ADD(x, y);
+}
+procedure {:kernel} $scan()
+{
+  var $temp.0:bv32;
+  var $ghosttemp.0:{{abstract_type}};
+  var $offset.0:bv32;
+  var $temp.1:bv32;
+  var $ghosttemp.1:{{abstract_type}};
+  var v3:bool;
+  var v11:bv32;
+  var v14:bv32;
+  var v10:bv32;
+  var v2:{{abstract_type}};
+  var v12:{{abstract_type}};
+  var v7:{{abstract_type}};
+  var v9:bv32;
+  var v5:bv32;
+  var v4:bool;
+  var v0:bv32;
+  var v6:{{abstract_type}};
+  var v1:bv32;
+  var v8:bool;
+  var v13:{{abstract_type}};
+$entry:
+    assert {:sourceloc}{:line 22}{:col 20}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+v0 := $$input[local_id_x];
+  assert {:sourceloc}{:line 22}{:col 7}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+  $$scan.sum[local_id_x] := v0;
+  assert {:sourceloc}{:line 23}{:col 12}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+  $$scan.ghostsum[local_id_x] := ZEXT(BV32_SHL(1bv32, local_id_x));
+  assert {:line 25}{:col 12}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} (if _NOT_ACCESSED_$$input != local_id_x then 1bv1 else 0bv1) != 0bv1;
+  call {:line 268}{:col 5}{:fname "/Users/nafe/work/gpuverify/GPUVerifyInstall/bugle/include-blang/annotations/barrier_invariants_autogenerated_definitions.h"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} $__barrier_invariant_22(
+    if (
+      (SHR($$scan.ghostsum[local_id_x], ZEXT(BV32_ADD(local_id_x, 1bv32))) == 0{{abstract_type}}) &&
+      if BV32_SLT(local_id_x,1bv32) then $$scan.ghostsum[local_id_x] == bitrange(0bv32, local_id_x)
+      else $$scan.ghostsum[local_id_x] == bitrange(BV32_ADD(BV32_SUB(local_id_x,1bv32), 1bv32), local_id_x)
+    ) then 1bv1 else 0bv1,
+  /* instantiations */local_id_x, BV32_SUB(local_id_x, 1bv32));
+  call {:line 27}{:col 3}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} $bugle_barrier(1bv1, 0bv1);
+  havoc v1;
+  havoc v2;
+  $temp.0, $ghosttemp.0, $offset.0 := v1, v2, 1bv32;
+  goto $for.cond;
+$for.cond:
+  assert {:line 33}{:col 9}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} BV1_XOR((if _READ_HAS_OCCURRED_$$output then 1bv1 else 0bv1), 1bv1) != 0bv1;
+  assert {:line 33}{:col 41}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} BV1_XOR((if _WRITE_HAS_OCCURRED_$$output then 1bv1 else 0bv1), 1bv1) != 0bv1;
+  assert {:line 34}{:col 9}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} BV1_XOR((if _READ_HAS_OCCURRED_$$scan.sum then 1bv1 else 0bv1), 1bv1) != 0bv1;
+  assert {:line 34}{:col 38}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} BV1_XOR((if _WRITE_HAS_OCCURRED_$$scan.sum then 1bv1 else 0bv1), 1bv1) != 0bv1;
+  assert {:line 35}{:col 9}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} BV1_XOR((if _READ_HAS_OCCURRED_$$scan.ghostsum then 1bv1 else 0bv1), 1bv1) != 0bv1;
+  assert {:line 35}{:col 43}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} BV1_XOR((if _WRITE_HAS_OCCURRED_$$scan.ghostsum then 1bv1 else 0bv1), 1bv1) != 0bv1;
+  assert {:line 36}{:col 9}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} (if BV32_SLE(0bv32, $offset.0) then 1bv1 else 0bv1) != 0bv1;
+  assert {:line 37}{:col 9}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} (if BV32_AND($offset.0, BV32_SUB($offset.0, 1bv32)) == 0bv32 then 1bv1 else 0bv1) != 0bv1;
+  assert {:line 38}{:col 9}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} (if BV32_SLE($offset.0, {{nthreads}}) then 1bv1 else 0bv1) != 0bv1;
+  assert {:line 39}{:col 9}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} 
+    if BV32_SLT(local_id_x,$offset.0) then $$scan.ghostsum[local_id_x] == bitrange(0bv32, local_id_x)
+    else $$scan.ghostsum[local_id_x] == bitrange(BV32_ADD(BV32_SUB(local_id_x,$offset.0), 1bv32), local_id_x);
+  assert {:line 40}{:col 9}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"}
+    (BV32_SLE(0bv32, BV32_SUB(local_id_x,$offset.0)) && BV32_SLT(BV32_SUB(local_id_x,$offset.0), {{nthreads}})) ==>
+    (if BV32_SLT(BV32_SUB(local_id_x,$offset.0),$offset.0) then $$scan.ghostsum[BV32_SUB(local_id_x,$offset.0)] == bitrange(0bv32, BV32_SUB(local_id_x,$offset.0))
+     else $$scan.ghostsum[BV32_SUB(local_id_x,$offset.0)] == bitrange(BV32_ADD(BV32_SUB(BV32_SUB(local_id_x,$offset.0),$offset.0), 1bv32), BV32_SUB(local_id_x,$offset.0)));
+  v3 := BV32_SLT($offset.0, {{nthreads}});
+  goto $truebb, $falsebb;
+$for.body:
+  v4 := BV32_UGE(local_id_x, $offset.0);
+  goto $truebb0, $falsebb0;
+$if.then:
+    assert {:sourceloc}{:line 46}{:col 18}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+v5 := $$scan.sum[BV32_SUB(local_id_x, $offset.0)];
+    assert {:sourceloc}{:line 47}{:col 28}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+v6 := $$scan.ghostsum[BV32_SUB(local_id_x, $offset.0)];
+  $temp.1, $ghosttemp.1 := v5, v6;
+  goto $if.end;
+$if.end:
+    assert {:sourceloc}{:line 50}{:col 5}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+v7 := $$scan.ghostsum[local_id_x];
+  $$__read_permission_temp[0bv32] := BV32_TO_PTR(v7[32:0]);
+  call {:line 277}{:col 5}{:fname "/Users/nafe/work/gpuverify/GPUVerifyInstall/bugle/include-blang/annotations/barrier_invariants_autogenerated_definitions.h"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} $__barrier_invariant_33(
+    if (
+      (SHR($$scan.ghostsum[local_id_x], ZEXT(BV32_ADD(local_id_x, 1bv32))) == 0{{abstract_type}}) &&
+      if BV32_SLT(local_id_x,$offset.0) then $$scan.ghostsum[local_id_x] == bitrange(0bv32, local_id_x)
+      else $$scan.ghostsum[local_id_x] == bitrange(BV32_ADD(BV32_SUB(local_id_x, $offset.0), 1bv32), local_id_x)
+    ) then 1bv1 else 0bv1,
+    /* instantiations */local_id_x, BV32_SUB(local_id_x, $offset.0), __other_bv32(local_id_x)
+  );
+  call {:line 261}{:col 5}{:fname "/Users/nafe/work/gpuverify/GPUVerifyInstall/bugle/include-blang/annotations/barrier_invariants_autogenerated_definitions.h"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} $__barrier_invariant_11((if (BV32_UGE(local_id_x, $offset.0) ==> $temp.1 == $$scan.sum[BV32_SUB(local_id_x, $offset.0)]) then 1bv1 else 0bv1), local_id_x);
+  call {:line 261}{:col 5}{:fname "/Users/nafe/work/gpuverify/GPUVerifyInstall/bugle/include-blang/annotations/barrier_invariants_autogenerated_definitions.h"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} $__barrier_invariant_11((if (BV32_UGE(local_id_x, $offset.0) ==> $ghosttemp.1 == $$scan.ghostsum[BV32_SUB(local_id_x, $offset.0)]) then 1bv1 else 0bv1), local_id_x);
+  call {:line 54}{:col 5}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} $bugle_barrier(1bv1, 0bv1);
+  v8 := BV32_UGE(local_id_x, $offset.0);
+  goto $truebb1, $falsebb1;
+$if.then219:
+    assert {:sourceloc}{:line 59}{:col 39}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+v9 := $$scan.sum[local_id_x];
+  call v10 := $__add_noovfl_signed_32(v9, $temp.1);
+  assert {:sourceloc}{:line 59}{:col 11}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+  $$scan.sum[local_id_x] := v10;
+  v11 := local_id_x;
+    assert {:sourceloc}{:line 61}{:col 16}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+v12 := $$scan.ghostsum[v11];
+  assert {:sourceloc}{:line 61}{:col 16}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+  assert AND(v12, $ghosttemp.1) == 0{{abstract_type}};
+  $$scan.ghostsum[v11] := ABSTRACT_ADD(v12, $ghosttemp.1);
+  goto $if.end227;
+$if.end227:
+    assert {:sourceloc}{:line 64}{:col 5}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+v13 := $$scan.ghostsum[local_id_x];
+  $$__read_permission_temp228[0bv32] := BV32_TO_PTR(v13[32:0]);
+  call {:line 268}{:col 5}{:fname "/Users/nafe/work/gpuverify/GPUVerifyInstall/bugle/include-blang/annotations/barrier_invariants_autogenerated_definitions.h"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} $__barrier_invariant_22(
+    if (
+      (SHR($$scan.ghostsum[local_id_x], ZEXT(BV32_ADD(local_id_x, 1bv32))) == 0{{abstract_type}}) &&
+      if BV32_SLT(local_id_x,BV32_MUL($offset.0, 2bv32)) then $$scan.ghostsum[local_id_x] == bitrange(0bv32, local_id_x)
+      else $$scan.ghostsum[local_id_x] == bitrange(BV32_ADD(BV32_SUB(local_id_x, BV32_MUL($offset.0, 2bv32)), 1bv32), local_id_x)
+    ) then 1bv1 else 0bv1,
+    /* instantiations */local_id_x, BV32_SUB(local_id_x, BV32_MUL(2bv32, $offset.0)));
+  call {:line 66}{:col 5}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} $bugle_barrier(1bv1, 0bv1);
+  goto $for.inc;
+$for.inc:
+  $temp.0, $ghosttemp.0, $offset.0 := $temp.1, $ghosttemp.1, BV32_MUL($offset.0, 2bv32);
+  goto $for.cond;
+$for.end:
+    assert {:sourceloc}{:line 69}{:col 21}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+v14 := $$scan.sum[local_id_x];
+  assert {:sourceloc}{:line 69}{:col 10}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} true;
+  $$output[local_id_x] := v14;
+  assert {:line 70}{:col 12}{:fname "kernel.cl"}{:dir "/Users/nafe/work/barrier-reasoning-tests/tests/hillis-steele/bv"} (if _NOT_ACCESSED_$$output != local_id_x then 1bv1 else 0bv1) != 0bv1;
+  return;
+$truebb:
+  assume {:partition} v3;
+  goto $for.body;
+$falsebb:
+  assume {:partition} !v3;
+  goto $for.end;
+$truebb0:
+  assume {:partition} v4;
+  goto $if.then;
+$falsebb0:
+  assume {:partition} !v4;
+  $temp.1, $ghosttemp.1 := $temp.0, $ghosttemp.0;
+  goto $if.end;
+$truebb1:
+  assume {:partition} v8;
+  goto $if.then219;
+$falsebb1:
+  assume {:partition} !v8;
+  goto $if.end227;
+}
+procedure {:barrier} $bugle_barrier($0:bv1, $1:bv1);
+procedure {:barrier_invariant} $__barrier_invariant_22($expr:bv1, $instantiation1:bv32, $instantiation2:bv32);
+procedure {:barrier_invariant} $__barrier_invariant_33($expr:bv1, $instantiation1:bv32, $instantiation2:bv32, $instantiation3:bv32);
+procedure {:barrier_invariant} $__barrier_invariant_11($expr:bv1, $instantiation1:bv32);
+axiom (if group_size_y == 1bv32 then 1bv1 else 0bv1) != 0bv1;
+axiom (if group_size_z == 1bv32 then 1bv1 else 0bv1) != 0bv1;
+axiom (if num_groups_y == 1bv32 then 1bv1 else 0bv1) != 0bv1;
+axiom (if num_groups_z == 1bv32 then 1bv1 else 0bv1) != 0bv1;
+axiom (if group_size_x == {{nthreads}} then 1bv1 else 0bv1) != 0bv1;
+axiom (if num_groups_x == 1bv32 then 1bv1 else 0bv1) != 0bv1;
