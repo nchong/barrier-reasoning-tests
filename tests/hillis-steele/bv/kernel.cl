@@ -10,6 +10,7 @@
   (((1 << (b-a+1)) - 1) << a)
 
 #define sweep(t,offset) \
+  ((ghostsum[t] >> (t+1)) == 0) & \
   __ite(t < offset, ghostsum[t] == bitrange(0,t), \
                     ghostsum[t] == bitrange((t-offset+1),t))
 
@@ -58,6 +59,7 @@ __kernel void scan(__global int *input, __global int *output) {
       // concretely
       sum[tid] = __add_noovfl_int(sum[tid], temp);
       // abstractly, adding adjacent intervals
+      __assert((ghostsum[tid] & ghosttemp) == 0);
       ghostsum[tid] |= ghosttemp;
     }
 
