@@ -12,7 +12,7 @@ class BINOP(object):
   MAX      = 'BINOP_MAX'
   OR       = 'BINOP_OR'
   ABS      = 'BINOP_ABSTRACT'
-  INTERVAL = 'BINOP_ABSTRACT_INTERVAL'
+  INTERVAL = 'BINOP_INTERVAL'
 
 class CHECK(object):
   RACE      = 'CHECK_RACE'
@@ -27,7 +27,7 @@ class PART(object):
 class SPEC(object):
   THREAD   = 'SPEC_THREADWISE'
   ELEMENT  = 'SPEC_ELEMENTWISE'
-  INTERVAL = 'SPEC_ABSTRACT_INTERVAL'
+  INTERVAL = 'SPEC_INTERVAL'
 
 class Options(object):
   N = 4

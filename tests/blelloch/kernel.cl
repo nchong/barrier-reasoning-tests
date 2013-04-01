@@ -56,7 +56,7 @@ __kernel void prescan(__local rtype *len) {
 
 #ifdef INC_UPSWEEP
   if (t < N/2) {
-#ifndef BINOP_ABSTRACT_INTERVAL
+#ifndef BINOP_INTERVAL
     result[2*t]   = len[2*t];
     result[2*t+1] = len[2*t+1];
 #else
@@ -105,7 +105,7 @@ __kernel void prescan(__local rtype *len) {
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
-#ifdef BINOP_ABSTRACT_INTERVAL
+#ifdef BINOP_INTERVAL
       __assert((result[ai] & result[bi]) == 0);
 #endif
 #if defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
@@ -203,11 +203,14 @@ __kernel void prescan(__local rtype *len) {
   __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), x2t(tid), x2t(other_tid));
   barrier(CLK_LOCAL_MEM_FENCE);
   __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) <= result[other_tid])));
-#elif defined(SPEC_ABSTRACT_INTERVAL)
+#elif defined(SPEC_INTERVAL)
+  __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
+  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), tid, other_tid);
+  barrier(CLK_LOCAL_MEM_FENCE);
   __non_temporal(__assert(result[2*tid] == ((1 << (2*tid)) - 1)));
   __non_temporal(__assert(result[2*tid+1] == ((1 << (2*tid+1)) - 1)));
 #else
-  #error SPEC_THREADWISE|SPEC_ELEMENTWISE|SPEC_ABSTRACT_INTERVAL must be defined
+  #error SPEC_THREADWISE|SPEC_ELEMENTWISE|SPEC_INTERVAL must be defined
 #endif
 #endif
 
