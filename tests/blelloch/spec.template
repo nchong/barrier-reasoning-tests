@@ -72,8 +72,12 @@ __axiom(get_num_groups(0) == 1);
   #define raddf(x,y) A(x,y)
   #define raddf_primed(x,y) A1(x,y)
   #define ridentity 0
+#elif defined(BINOP_ABSTRACT_INTERVAL)
+  #define raddf(x,y) (x | y)
+  #define raddf_primed(x,y) (x | y)
+  #define ridentity 0
 #else
-  #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT must be defined
+  #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT|BINOP_ABSTRACT_INTERVAL must be defined
 #endif
 
 // ---------------------------------------------------------------------------
@@ -120,6 +124,9 @@ __axiom(get_num_groups(0) == 1);
 
 #define upsweep(offset,result,len,x) \
   (upsweep_core(offset,result,len,x) & upsweep_nooverflow(offset,result,len,x))
+#elif defined(BINOP_ABSTRACT_INTERVAL)
+#define upsweep(offset,result,len,x) \
+  {{abstract_upsweep(N)}}
 #else
 #define upsweep(offset,result,len,x) \
   upsweep_core(offset,result,len,x)
@@ -155,6 +162,9 @@ __axiom(get_num_groups(0) == 1);
 
 #define downsweep(offset,result,ghostsum,x) \
   (downsweep_core(offset,result,ghostsum,x) & downsweep_nooverflow(offset,result,ghostsum,x))
+#elif defined(BINOP_ABSTRACT_INTERVAL)
+#define downsweep(offset,result,ghostsum,x) \
+  {{abstract_downsweep(N)}}
 #else
 #define downsweep(offset,result,ghostsum,x) \
   downsweep_core(offset,result,ghostsum,x)

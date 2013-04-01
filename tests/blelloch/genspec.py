@@ -44,6 +44,14 @@ def upsweep_core(N):
 def upsweep_nooverflow(N):
   return upsweep_pattern(N, lambda terms: '__add_noovfl(%s)' % ', '.join(terms))
 
+def abstract_upsweep(N):
+  offsets = [ 2**i for i in range(1, log2(N)+1) ]
+  def term(offset):
+    return '__ite_rtype((offset >= %d) & isvertex(x,%d), (%d << (x-%d)), ridentity)' % (offset,offset,(2**(offset/2))-1,offset-1)
+  terms = ['(1 << x)']
+  terms.extend([ term(offset) for offset in offsets ])
+  return 'result[x] == (%s)' % ' | '.join(reversed(terms))
+
 def upsweep_barrier(N):
   cases = []
   def gencase(d,offset,rel,aibi):
@@ -121,6 +129,10 @@ def downsweep_core(N):
 def downsweep_nooverflow(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),'ridentity')
   return '(' + '__implies(isvertex(x,mul2(offset)), __add_noovfl(%s))' % ', '.join(cases) + ')'
+
+def abstract_downsweep(N):
+  cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),'ridentity')
+  return '(' + 'result[x] == __ite_rtype(isvertex(x,mul2(offset)), %s, ghostsum[x])' % ' | '.join(cases) + ')'
 
 def downsweep_barrier(N):
   ds = [ 2**i for i in range(log2(N)) ]
@@ -200,6 +212,8 @@ def genspec(N):
   env = Environment(loader=PackageLoader('genspec', '.'))
   t = env.get_template('spec.template')
   return t.render(N=N, NDIV2=N/2,
+    abstract_upsweep=abstract_upsweep,
+    abstract_downsweep=abstract_downsweep,
     upsweep_core=upsweep_core,
     upsweep_nooverflow=upsweep_nooverflow,
     upsweep_barrier=upsweep_barrier,

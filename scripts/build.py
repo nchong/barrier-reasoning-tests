@@ -8,10 +8,11 @@ AXIOMS_DIR = 'axioms'
 KERNEL     = 'kernel.cl'
 
 class BINOP(object):
-  ADD = 'BINOP_ADD'
-  MAX = 'BINOP_MAX'
-  OR  = 'BINOP_OR'
-  ABS = 'BINOP_ABSTRACT'
+  ADD      = 'BINOP_ADD'
+  MAX      = 'BINOP_MAX'
+  OR       = 'BINOP_OR'
+  ABS      = 'BINOP_ABSTRACT'
+  INTERVAL = 'BINOP_ABSTRACT_INTERVAL'
 
 class CHECK(object):
   RACE      = 'CHECK_RACE'
@@ -24,8 +25,9 @@ class PART(object):
   ENDSPEC   = 'INC_ENDSPEC'
 
 class SPEC(object):
-  THREAD  = 'SPEC_THREADWISE'
-  ELEMENT = 'SPEC_ELEMENTWISE'
+  THREAD   = 'SPEC_THREADWISE'
+  ELEMENT  = 'SPEC_ELEMENTWISE'
+  INTERVAL = 'SPEC_ABSTRACT_INTERVAL'
 
 class Options(object):
   N = 4
@@ -99,6 +101,7 @@ def main(doit,header=None,argv=None):
       elif op == 'max':      Options.op = BINOP.MAX
       elif op == 'or':       Options.op = BINOP.OR
       elif op == 'abstract': Options.op = BINOP.ABS
+      elif op == 'interval': Options.op = BINOP.INTERVAL
       else: return error('operator [%s] not recognised' % a)
     if o == "--width":
       try:
@@ -112,6 +115,7 @@ def main(doit,header=None,argv=None):
       spec = a.lower()
       if spec == 'element': Options.spec = SPEC.ELEMENT
       elif spec == 'thread': Options.spec = SPEC.THREAD
+      elif spec == 'interval': Options.spec = SPEC.INTERVAL
       else: return error('spec must be one of element, thread')
     if o == "--flags":
       Options.flags = a
