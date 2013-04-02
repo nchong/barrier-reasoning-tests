@@ -178,6 +178,9 @@ __kernel void prescan(__local rtype *len) {
       dtype bi = offset * (2 * t + 2) - 1;
       rtype temp = result[ai];
       result[ai] = result[bi];
+#ifdef BINOP_INTERVAL
+      __assert((result[bi] & temp) == 0);
+#endif
 #if defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
       result[bi] = nooverflow_add(result[bi], temp);
 #else
