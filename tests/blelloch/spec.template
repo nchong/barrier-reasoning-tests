@@ -2,14 +2,14 @@
 // AXIOMS    
 // ---------------------------------------------------------------------------
 #if defined(__CUDA_ARCH__)
-#if defined(INC_ENDSPEC) && defined(SPEC_ELEMENTWISE)
+#if defined(INC_ENDSPEC) && (defined(SPEC_ELEMENTWISE) || defined(SPEC_INTERVAL))
 __axiom(blockDim.x == {{N}});
 #else
 __axiom(blockDim.x == {{NDIV2}});
 #endif
 __axiom(gridDim.x == 1);
 #elif defined(__OPENCL_VERSION__)
-#if defined(INC_ENDSPEC) && defined(SPEC_ELEMENTWISE)
+#if defined(INC_ENDSPEC) && (defined(SPEC_ELEMENTWISE) || defined(SPEC_INTERVAL))
 __axiom(get_local_size(0) == {{N}});
 #else
 __axiom(get_local_size(0) == {{NDIV2}});
@@ -201,5 +201,5 @@ __axiom(get_num_groups(0) == 1);
   {{upsweep_instantiation(N,elementwise=True)}}
 #elif defined(SPEC_INTERVAL)
 #define upsweep_instantiation \
-  {{range(NDIV2) | join(', ')}}
+  0, {{upsweep_instantiation(N,elementwise=True)}}
 #endif

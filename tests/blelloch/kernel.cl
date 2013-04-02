@@ -205,10 +205,13 @@ __kernel void prescan(__local rtype *len) {
   __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) <= result[other_tid])));
 #elif defined(SPEC_INTERVAL)
   __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
-  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), tid, other_tid);
+  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), x2t(tid), x2t(other_tid));
   barrier(CLK_LOCAL_MEM_FENCE);
-  __non_temporal(__assert(result[2*tid] == ((1 << (2*tid)) - 1)));
-  __non_temporal(__assert(result[2*tid+1] == ((1 << (2*tid+1)) - 1)));
+// (a) prescan specification
+  __non_temporal(__assert(result[tid] == ((1<<tid)-1)));
+// (b) monotonic-like specification
+  __non_temporal(__assert(__implies(tid < other_tid, (result[tid] & result[other_tid]) == result[tid])));
+  __non_temporal(__assert(__implies(tid < other_tid, ((result[tid] ^ result[other_tid]) >> tid) > 0)));
 #else
   #error SPEC_THREADWISE|SPEC_ELEMENTWISE|SPEC_INTERVAL must be defined
 #endif
