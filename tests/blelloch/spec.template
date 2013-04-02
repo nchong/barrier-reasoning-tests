@@ -126,7 +126,7 @@ __axiom(get_num_groups(0) == 1);
   (upsweep_core(offset,result,len,x) & upsweep_nooverflow(offset,result,len,x))
 #elif defined(BINOP_INTERVAL)
 #define upsweep(offset,result,len,x) \
-  {{abstract_upsweep(N)}}
+  {{interval_upsweep(N)}}
 #else
 #define upsweep(offset,result,len,x) \
   upsweep_core(offset,result,len,x)
@@ -164,7 +164,7 @@ __axiom(get_num_groups(0) == 1);
   (downsweep_core(offset,result,ghostsum,x) & downsweep_nooverflow(offset,result,ghostsum,x))
 #elif defined(BINOP_INTERVAL)
 #define downsweep(offset,result,ghostsum,x) \
-  {{abstract_downsweep(N)}}
+  {{interval_downsweep(N)}}
 #else
 #define downsweep(offset,result,ghostsum,x) \
   downsweep_core(offset,result,ghostsum,x)
