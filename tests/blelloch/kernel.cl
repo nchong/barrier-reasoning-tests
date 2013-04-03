@@ -50,18 +50,25 @@
 __kernel void prescan(__local rtype *len) {
   __local rtype ghostsum[N];
   __local rtype result[N];
+#ifdef BINOP_PAIR
+  __local dtype interval_lo[N];
+  __local dtype interval_hi[N];
+#endif
 
   dtype offset;
   dtype t = get_local_id(0);
 
 #ifdef INC_UPSWEEP
   if (t < N/2) {
-#ifndef BINOP_INTERVAL
-    result[2*t]   = len[2*t];
-    result[2*t+1] = len[2*t+1];
-#else
+#ifdef BINOP_PAIR
+    interval_lo[2*t]   = 2*t;   interval_hi[2*t]   = 2*t;
+    interval_lo[2*t+1] = 2*t+1; interval_hi[2*t+1] = 2*t+1;
+#elif BINOP_INTERVAL
     result[2*t]   = (1 << (2*t));
     result[2*t+1] = (1 << (2*t+1));
+#else
+    result[2*t]   = len[2*t];
+    result[2*t+1] = len[2*t+1];
 #endif
   }
 
@@ -105,10 +112,16 @@ __kernel void prescan(__local rtype *len) {
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
-#ifdef BINOP_INTERVAL
+#ifdef BINOP_PAIR
+      __assert(interval_lo[ai] <= interval_hi[ai]);
+      __assert(interval_lo[bi] <= interval_hi[bi]);
+      __assert(interval_hi[ai] + 1 == interval_lo[bi]);
+#elif BINOP_INTERVAL
       __assert((result[ai] & result[bi]) == 0);
 #endif
-#if defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
+#if defined(BINOP_PAIR)
+      interval_lo[bi] = interval_lo[ai];
+#elif defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
       result[bi] = nooverflow_add(result[ai], result[bi]);
 #else
       result[bi] = raddf_primed(result[ai], result[bi]);

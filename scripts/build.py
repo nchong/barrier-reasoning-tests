@@ -13,6 +13,7 @@ class BINOP(object):
   OR       = 'BINOP_OR'
   ABS      = 'BINOP_ABSTRACT'
   INTERVAL = 'BINOP_INTERVAL'
+  PAIR     = 'BINOP_PAIR'
 
 class CHECK(object):
   RACE      = 'CHECK_RACE'
@@ -102,6 +103,7 @@ def main(doit,header=None,argv=None):
       elif op == 'or':       Options.op = BINOP.OR
       elif op == 'abstract': Options.op = BINOP.ABS
       elif op == 'interval': Options.op = BINOP.INTERVAL
+      elif op == 'pair':     Options.op = BINOP.PAIR
       else: return error('operator [%s] not recognised' % a)
     if o == "--width":
       try:

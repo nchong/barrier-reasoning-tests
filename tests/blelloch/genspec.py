@@ -47,10 +47,17 @@ def upsweep_nooverflow(N):
 def interval_upsweep(N):
   offsets = [ 2**i for i in range(1, log2(N)+1) ]
   def term(offset):
-    return '__ite_rtype((offset >= %d) & isvertex(x,%d), (%d << (x-%d)), ridentity)' % (offset,offset,(2**(offset/2))-1,offset-1)
+    return '__ite_rtype((offset >= %d) & isvertex(x,%d), (0x%08x << (x-%d)), ridentity)' % (offset,offset,(2**(offset/2))-1,offset-1)
   terms = ['(1 << x)']
   terms.extend([ term(offset) for offset in offsets ])
   return 'result[x] == (%s)' % ' | '.join(reversed(terms))
+
+def pair_upsweep(N):
+  offsets = [ 2**i for i in range(1, log2(N)+1) ]
+  def term(offset):
+    return '__ite_dtype((offset >= %d) & isvertex(x,%d), %d, 0)' % (offset,offset,offset/2)
+  terms = [ term(offset) for offset in offsets ]
+  return '(interval_hi[x] == x) & (interval_lo[x] == (x - (%s)))' % ' + '.join(reversed(terms))
 
 def upsweep_barrier(N):
   cases = []
@@ -212,6 +219,7 @@ def genspec(N):
   env = Environment(loader=PackageLoader('genspec', '.'))
   t = env.get_template('spec.template')
   return t.render(N=N, NDIV2=N/2,
+    pair_upsweep=pair_upsweep,
     interval_upsweep=interval_upsweep,
     interval_downsweep=interval_downsweep,
     upsweep_core=upsweep_core,
