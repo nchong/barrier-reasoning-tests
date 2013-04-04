@@ -57,7 +57,7 @@ def pair_upsweep(N):
   def term(offset):
     return '__ite_dtype((offset >= %d) & isvertex(x,%d), %d, 0)' % (offset,offset,offset/2)
   terms = [ term(offset) for offset in offsets ]
-  return '(interval_hi[x] == x) & (interval_lo[x] == (x - (%s)))' % ' + '.join(reversed(terms))
+  return '(result_hi[x] == x) & (result_lo[x] == (x - (%s)))' % ' + '.join(reversed(terms))
 
 def upsweep_barrier(N):
   cases = []

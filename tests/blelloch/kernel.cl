@@ -51,8 +51,8 @@ __kernel void prescan(__local rtype *len) {
   __local rtype ghostsum[N];
   __local rtype result[N];
 #ifdef BINOP_PAIR
-  __local dtype interval_lo[N];
-  __local dtype interval_hi[N];
+  __local dtype result_lo[N];
+  __local dtype result_hi[N];
 #endif
 
   dtype offset;
@@ -61,8 +61,8 @@ __kernel void prescan(__local rtype *len) {
 #ifdef INC_UPSWEEP
   if (t < N/2) {
 #ifdef BINOP_PAIR
-    interval_lo[2*t]   = 2*t;   interval_hi[2*t]   = 2*t;
-    interval_lo[2*t+1] = 2*t+1; interval_hi[2*t+1] = 2*t+1;
+    result_lo[2*t]   = 2*t;   result_hi[2*t]   = 2*t;
+    result_lo[2*t+1] = 2*t+1; result_hi[2*t+1] = 2*t+1;
 #elif BINOP_INTERVAL
     result[2*t]   = (1 << (2*t));
     result[2*t+1] = (1 << (2*t+1));
@@ -113,14 +113,14 @@ __kernel void prescan(__local rtype *len) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
 #ifdef BINOP_PAIR
-      __assert(interval_lo[ai] <= interval_hi[ai]);
-      __assert(interval_lo[bi] <= interval_hi[bi]);
-      __assert(interval_hi[ai] + 1 == interval_lo[bi]);
+      __assert(result_lo[ai] <= result_hi[ai]);
+      __assert(result_lo[bi] <= result_hi[bi]);
+      __assert(result_hi[ai] + 1 == result_lo[bi]);
 #elif BINOP_INTERVAL
       __assert((result[ai] & result[bi]) == 0);
 #endif
 #if defined(BINOP_PAIR)
-      interval_lo[bi] = interval_lo[ai];
+      result_lo[bi] = result_lo[ai];
 #elif defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
       result[bi] = nooverflow_add(result[ai], result[bi]);
 #else
