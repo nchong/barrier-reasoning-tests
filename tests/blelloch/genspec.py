@@ -57,7 +57,7 @@ def pair_upsweep(N):
   def term(offset):
     return '__ite_dtype((offset >= %d) & isvertex(x,%d), %d, 0)' % (offset,offset,offset/2)
   terms = [ term(offset) for offset in offsets ]
-  return '(result_hi[x] == (x+1)) & (result_lo[x] == (x - (%s)))' % ' + '.join(reversed(terms))
+  return '(result[x].hi == (x+1)) & (result[x].lo == (x - (%s)))' % ' + '.join(reversed(terms))
 
 def upsweep_barrier(N):
   cases = []
@@ -141,6 +141,12 @@ def interval_downsweep(N):
   cases = downsweep_pattern(N,(lambda x: 'term(ghostsum,%s,x)' % x),'ridentity')
   return '(' + 'result[x] == __ite_rtype(isvertex(x,mul2(offset)), %s, ghostsum[x])' % ' | '.join(cases) + ')'
 
+def pair_downsweep(N):
+  cases = downsweep_pattern(N,(lambda x: 'hi_term(%s,x)' % x),'0')
+  hi = '(result[x].hi == __ite_dtype(isvertex(x,mul2(offset)), %s, ghostsum[x].hi))' % summation(cases, 'max')
+  lo = '(result[x].lo == __ite_dtype(isvertex(x,mul2(offset)),  0, ghostsum[x].lo))'
+  return '(' + ' & '.join([hi,lo]) + ')'
+
 def downsweep_barrier(N):
   ds = [ 2**i for i in range(log2(N)) ]
   offsets = [x for x in reversed(ds)][1:] + [0]
@@ -220,6 +226,7 @@ def genspec(N):
   t = env.get_template('spec.template')
   return t.render(N=N, NDIV2=N/2,
     pair_upsweep=pair_upsweep,
+    pair_downsweep=pair_downsweep,
     interval_upsweep=interval_upsweep,
     interval_downsweep=interval_downsweep,
     upsweep_core=upsweep_core,

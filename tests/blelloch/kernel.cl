@@ -48,13 +48,12 @@
 #include __stringify(__spec_h(N))
 
 __kernel void prescan(__local rtype *len) {
+#ifdef BINOP_PAIR
+  __local uint2 ghostsum[N];
+  __local uint2 result[N];
+#else
   __local rtype ghostsum[N];
   __local rtype result[N];
-#ifdef BINOP_PAIR
-  __local dtype result_lo[N];
-  __local dtype result_hi[N];
-  __local dtype ghostsum_lo[N];
-  __local dtype ghostsum_hi[N];
 #endif
 
   dtype offset;
@@ -63,8 +62,8 @@ __kernel void prescan(__local rtype *len) {
 #ifdef INC_UPSWEEP
   if (t < N/2) {
 #ifdef BINOP_PAIR
-    result_lo[2*t]   = 2*t;   result_hi[2*t]   = 2*t+1;
-    result_lo[2*t+1] = 2*t+1; result_hi[2*t+1] = 2*t+2;
+    result[2*t]   = (uint2)(2*t  , 2*t+1);
+    result[2*t+1] = (uint2)(2*t+1, 2*t+2);
 #elif BINOP_INTERVAL
     result[2*t]   = (1 << (2*t));
     result[2*t+1] = (1 << (2*t+1));
@@ -113,15 +112,15 @@ __kernel void prescan(__local rtype *len) {
       dtype bi = offset * (2 * t + 2) - 1;
 #ifdef CHECK_BI
 #ifdef BINOP_PAIR
-      __assert(result_lo[ai] <  result_hi[ai]);
-      __assert(result_lo[bi] <  result_hi[bi]);
-      __assert(result_hi[ai] == result_lo[bi]);
+      __assert(result[ai].lo < result[ai].hi);
+      __assert(                result[ai].hi == result[bi].lo);
+      __assert(                                 result[bi].lo < result[bi].hi);
 #elif BINOP_INTERVAL
       __assert((result[ai] & result[bi]) == 0);
 #endif
 #endif
 #if defined(BINOP_PAIR)
-      result_lo[bi] = result_lo[ai];
+      result[bi].lo = result[ai].lo;
 #elif defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
       result[bi] = nooverflow_add(result[ai], result[bi]);
 #else
@@ -187,13 +186,25 @@ __kernel void prescan(__local rtype *len) {
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
-      rtype temp = result[ai];
-      result[ai] = result[bi];
+#ifdef CHECK_BI
 #ifdef BINOP_INTERVAL
       __assert((result[bi] & temp) == 0);
+#elif BINOP_PAIR
+      __assert(result[bi].lo <= result[bi].hi);
+      __assert(                 result[bi].hi == result[ai].lo);
+      __assert(                                  result[ai].lo <= result[ai].hi);
 #endif
+#endif
+#ifdef BINOP_PAIR
+      uint2 temp = result[ai];
+#else
+      rtype temp = result[ai];
+#endif
+      result[ai] = result[bi];
 #if defined(FORCE_NOOVFL) || (defined(INC_ENDSPEC) && defined(BINOP_ADD))
       result[bi] = nooverflow_add(result[bi], temp);
+#elif BINOP_PAIR
+      result[bi].hi = temp.hi;
 #else
       result[bi] = raddf(result[bi], temp);
 #endif

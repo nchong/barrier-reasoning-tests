@@ -77,7 +77,9 @@ __axiom(get_num_groups(0) == 1);
   #define raddf_primed(x,y) (x | y)
   #define ridentity 0
 #elif defined(BINOP_PAIR)
-
+  // raddf not defined
+  // raddf_primed not defined
+  #define ridentity (uint2)(0,0)
 #else
   #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT|BINOP_INTERVAL must be defined
 #endif
@@ -170,6 +172,14 @@ __axiom(get_num_groups(0) == 1);
 #elif defined(BINOP_INTERVAL)
 #define downsweep(offset,result,ghostsum,x) \
   {{interval_downsweep(N)}}
+#elif defined(BINOP_PAIR)
+#define max(x,y) __ite_dtype(x < y, y, x)
+
+#define hi_term(bit,x) \
+  __ite_dtype(!isone(bit,x), 0, x + sum_pow2_zeroes(bit,x) - pow2(bit) + 1)
+
+#define downsweep(offset,result,ghostsum,x) \
+  {{pair_downsweep(N)}}
 #else
 #define downsweep(offset,result,ghostsum,x) \
   downsweep_core(offset,result,ghostsum,x)
