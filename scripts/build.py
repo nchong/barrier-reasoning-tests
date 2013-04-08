@@ -11,6 +11,7 @@ class BINOP(object):
   ADD      = 'BINOP_ADD'
   MAX      = 'BINOP_MAX'
   OR       = 'BINOP_OR'
+  AND      = 'BINOP_AND'
   ABS      = 'BINOP_ABSTRACT'
   INTERVAL = 'BINOP_INTERVAL'
   PAIR     = 'BINOP_PAIR'
@@ -102,6 +103,7 @@ def main(doit,header=None,argv=None):
       if op == 'add':        Options.op = BINOP.ADD
       elif op == 'max':      Options.op = BINOP.MAX
       elif op == 'or':       Options.op = BINOP.OR
+      elif op == 'and':      Options.op = BINOP.AND
       elif op == 'abstract': Options.op = BINOP.ABS
       elif op == 'interval': Options.op = BINOP.INTERVAL
       elif op == 'pair':     Options.op = BINOP.PAIR
