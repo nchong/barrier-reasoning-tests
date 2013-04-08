@@ -29,6 +29,7 @@ class SPEC(object):
   THREAD   = 'SPEC_THREADWISE'
   ELEMENT  = 'SPEC_ELEMENTWISE'
   INTERVAL = 'SPEC_INTERVAL'
+  PAIR     = 'SPEC_PAIR'
 
 class Options(object):
   N = 4
@@ -118,6 +119,7 @@ def main(doit,header=None,argv=None):
       if spec == 'element': Options.spec = SPEC.ELEMENT
       elif spec == 'thread': Options.spec = SPEC.THREAD
       elif spec == 'interval': Options.spec = SPEC.INTERVAL
+      elif spec == 'pair': Options.spec = SPEC.PAIR
       else: return error('spec must be one of element, thread')
     if o == "--flags":
       Options.flags = a
