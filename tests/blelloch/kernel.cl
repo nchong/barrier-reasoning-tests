@@ -222,12 +222,20 @@ __kernel void prescan(__local rtype *len) {
   __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), tid, other_tid);
   barrier(CLK_LOCAL_MEM_FENCE);
   __non_temporal(__assert(raddf(result[2*tid], len[2*tid]) == result[2*tid+1]));
-  __non_temporal(__assert(__implies(tid < other_tid, raddf(result[2*tid+1], len[2*tid+1]) <= result[2*other_tid])));
+  #ifdef BINOP_AND
+    __non_temporal(__assert(__implies(tid < other_tid, raddf(result[2*tid+1], len[2*tid+1]) >= result[2*other_tid])));
+  #else
+    __non_temporal(__assert(__implies(tid < other_tid, raddf(result[2*tid+1], len[2*tid+1]) <= result[2*other_tid])));
+  #endif
 #elif defined(SPEC_ELEMENTWISE)
   __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
   __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), x2t(tid), x2t(other_tid));
   barrier(CLK_LOCAL_MEM_FENCE);
-  __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) <= result[other_tid])));
+  #ifdef BINOP_AND
+    __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) >= result[other_tid])));
+  #else
+    __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) <= result[other_tid])));
+  #endif
 #elif defined(SPEC_INTERVAL)
   __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
   __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), x2t(tid), x2t(other_tid));
