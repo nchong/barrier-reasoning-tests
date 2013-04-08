@@ -211,7 +211,7 @@ __axiom(get_num_groups(0) == 1);
 #if defined(SPEC_THREADWISE)
 #define upsweep_instantiation \
   {{upsweep_instantiation(N)}}
-#elif defined(SPEC_ELEMENTWISE)
+#elif defined(SPEC_ELEMENTWISE) || defined(SPEC_PAIR)
 #define upsweep_instantiation \
   {{upsweep_instantiation(N,elementwise=True)}}
 #elif defined(SPEC_INTERVAL)

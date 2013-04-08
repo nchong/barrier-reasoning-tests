@@ -237,8 +237,14 @@ __kernel void prescan(__local rtype *len) {
 // (b) monotonic-like specification
   __non_temporal(__assert(__implies(tid < other_tid, (result[tid] & result[other_tid]) == result[tid])));
   __non_temporal(__assert(__implies(tid < other_tid, ((result[tid] ^ result[other_tid]) >> tid) > 0)));
+#elif defined(SPEC_PAIR)
+  __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
+  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), x2t(tid), x2t(other_tid));
+  barrier(CLK_LOCAL_MEM_FENCE);
+// (a) prescan specification
+  __non_temporal(__assert((result[tid].lo == 0) & (result[tid].hi == tid)));
 #else
-  #error SPEC_THREADWISE|SPEC_ELEMENTWISE|SPEC_INTERVAL must be defined
+  #error SPEC_THREADWISE|SPEC_ELEMENTWISE|SPEC_INTERVAL|SPEC_PAIR must be defined
 #endif
 #endif
 
