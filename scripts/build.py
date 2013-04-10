@@ -25,6 +25,7 @@ class PART(object):
   UPSWEEP   = 'INC_UPSWEEP'
   DOWNSWEEP = 'INC_DOWNSWEEP'
   ENDSPEC   = 'INC_ENDSPEC'
+  CONVERT   = 'INC_CONVERT'
 
 class SPEC(object):
   THREAD   = 'SPEC_THREADWISE'
@@ -65,6 +66,7 @@ def help(progname,header=None):
   print '  --upsweep'
   print '  --downsweep'
   print '  --endspec'
+  print '  --convert'
   print '  --spec=X'
   print '  --specs-dir=X'
   print '  --boogie-file=X'
@@ -87,7 +89,7 @@ def main(doit,header=None,argv=None):
     opts, args = getopt.getopt(argv[1:],'h',
       ['verbose','help',
        'op=','width=','flags=',
-       'upsweep','downsweep','endspec',
+       'upsweep','downsweep','endspec','convert',
        'boogie-file=','memout=','timeout=','relentless','repeat=',
        'spec=','stop-at-bpl', 'specs-dir=',
       ])
@@ -131,6 +133,8 @@ def main(doit,header=None,argv=None):
       Options.parts.append(PART.DOWNSWEEP)
     if o == '--endspec':
       Options.parts.append(PART.ENDSPEC)
+    if o == '--convert':
+      Options.parts.append(PART.CONVERT)
     if o == '--boogie-file':
       Options.boogie_file = a
     if o == '--stop-at-bpl':
@@ -195,7 +199,7 @@ def buildcmd(checks,extraflags=[]):
         ]
   if Options.memout > 0:
     cmd.append('--memout=%d' % Options.memout)
-  if PART.ENDSPEC in Options.parts:
+  if PART.ENDSPEC in Options.parts or PART.CONVERT in Options.parts:
     cmd.append('-D%s' % Options.spec)
   cmd.extend(['-D%s' % x for x in Options.parts])
   cmd.extend(['-D%s' % x for x in checks])

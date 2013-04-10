@@ -222,6 +222,7 @@ __kernel void prescan(__local rtype *len) {
   __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), tid, other_tid);
   barrier(CLK_LOCAL_MEM_FENCE);
   __non_temporal(__assert(raddf(result[2*tid], len[2*tid]) == result[2*tid+1]));
+  __non_temporal(__assert(raddf(result[2*other_tid], len[2*other_tid]) == result[2*other_tid+1]));
   #ifdef BINOP_AND
     __non_temporal(__assert(__implies(tid < other_tid, raddf(result[2*tid+1], len[2*tid+1]) >= result[2*other_tid])));
   #else
@@ -251,9 +252,35 @@ __kernel void prescan(__local rtype *len) {
   barrier(CLK_LOCAL_MEM_FENCE);
 // (a) prescan specification
   __non_temporal(__assert((result[tid].lo == 0) & (result[tid].hi == tid)));
+// (b) monotonic-like specification
+  __non_temporal(__assert(__implies(tid < other_tid, result[tid].hi < result[other_tid].hi)));
 #else
   #error SPEC_THREADWISE|SPEC_ELEMENTWISE|SPEC_INTERVAL|SPEC_PAIR must be defined
 #endif
+#endif
+
+#ifdef INC_CONVERT
+  #ifndef SPEC_ELEMENTWISE
+  #error Must define SPEC_ELEMENTWISE
+  #endif
+
+  // from threadwise specification
+  #define s x2t(tid)
+  #define t x2t(other_tid)
+  __non_temporal(__assume(raddf(result[2*s], len[2*s]) == result[2*s+1]));
+  __non_temporal(__assume(raddf(result[2*t], len[2*t]) == result[2*t+1]));
+  #ifdef BINOP_AND
+    __non_temporal(__assume(__implies(s < t, raddf(result[2*s+1], len[2*s+1]) >= result[2*t])));
+  #else
+    __non_temporal(__assume(__implies(s < t, raddf(result[2*s+1], len[2*s+1]) <= result[2*t])));
+  #endif
+
+  // to elementwise specification
+  #ifdef BINOP_AND
+    __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) >= result[other_tid])));
+  #else
+    __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid]) <= result[other_tid])));
+  #endif
 #endif
 
 #ifdef FORCE_FAIL
