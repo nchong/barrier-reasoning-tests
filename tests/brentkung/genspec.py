@@ -38,6 +38,13 @@ def upsweep_core(N):
 def upsweep_nooverflow(N):
   return upsweep_pattern(N, lambda terms: '__add_noovfl(%s)' % ', '.join(terms))
 
+def pair_upsweep(N):
+  offsets = [ 2**i for i in range(1, log2(N)+1) ]
+  def term(offset):
+    return '__ite_dtype((offset >= %d) & isvertex(x,%d), %d, 0)' % (offset,offset,offset/2)
+  terms = [ term(offset) for offset in offsets ]
+  return '(result[x].hi == (x+1)) & (result[x].lo == (x - (%s)))' % ' + '.join(reversed(terms))
+
 def upsweep_barrier(N):
   cases = []
   def gencase(d,offset,rel,aibi):
@@ -234,6 +241,7 @@ def genspec(N):
   env = Environment(loader=PackageLoader('genspec', '.'))
   t = env.get_template('spec.template')
   return t.render(N=N, NDIV2=N/2,
+    pair_upsweep=pair_upsweep,
     upsweep_core=upsweep_core,
     upsweep_nooverflow=upsweep_nooverflow,
     upsweep_barrier=upsweep_barrier,

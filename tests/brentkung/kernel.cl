@@ -51,16 +51,26 @@ DECLARE_UF_BINARY(A1, rtype, rtype, rtype);
 #include __stringify(__spec_h(N))
 
 __kernel void scan(__local rtype *len) {
+#ifdef BINOP_PAIR
+  __local uint2 ghostsum[N];
+  __local uint2 result[N];
+#else
   __local rtype ghostsum[N];
   __local rtype result[N];
+#endif
 
   dtype offset;
   dtype t = get_local_id(0);
 
 #ifdef INC_UPSWEEP
   if (t < N/2) {
+#ifdef BINOP_PAIR
+    result[2*t]   = (uint2)(2*t  , 2*t+1);
+    result[2*t+1] = (uint2)(2*t+1, 2*t+2);
+#else
     result[2*t]   = len[2*t];
     result[2*t+1] = len[2*t+1];
+#endif
   }
 
   offset = 1;
@@ -103,7 +113,16 @@ __kernel void scan(__local rtype *len) {
     if (t < d) {
       dtype ai = offset * (2 * t + 1) - 1;
       dtype bi = offset * (2 * t + 2) - 1;
-#if defined(INC_ENDSPEC) && defined(BINOP_ADD)
+#ifdef CHECK_BI
+#ifdef BINOP_PAIR
+      __assert(result[ai].lo < result[ai].hi);
+      __assert(                result[ai].hi == result[bi].lo);
+      __assert(                                 result[bi].lo < result[bi].hi);
+#endif
+#endif
+#if defined(BINOP_PAIR)
+      result[bi].lo = result[ai].lo;
+#elif defined(INC_ENDSPEC) && defined(BINOP_ADD)
       result[bi] = nooverflow_add(result[ai], result[bi]);
 #else
       result[bi] = raddf_primed(result[ai], result[bi]);

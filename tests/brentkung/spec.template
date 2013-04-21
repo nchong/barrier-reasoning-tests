@@ -70,8 +70,12 @@ __axiom(get_num_groups(0) == 1);
   #define raddf(x,y) A(x,y)
   #define raddf_primed(x,y) A1(x,y)
   #define ridentity 0
+#elif defined(BINOP_PAIR)
+  // raddf not defined
+  // raddf_primed not defined
+  #define ridentity (uint2)(0,0)
 #else
-  #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT must be defined
+  #error BINOP_ADD|BINOP_OR|BINOP_MAX|BINOP_ABSTRACT|BINOP_PAIR must be defined
 #endif
 
 // ---------------------------------------------------------------------------
@@ -125,6 +129,9 @@ __axiom(get_num_groups(0) == 1);
 
 #define upsweep(offset,result,len,x) \
   (upsweep_core(offset,result,len,x) & upsweep_nooverflow(offset,result,len,x))
+#elif defined(BINOP_PAIR)
+#define upsweep(offset,result,len,x) \
+  {{pair_upsweep(N)}}
 #else
 #define upsweep(offset,result,len,x) \
   upsweep_core(offset,result,len,x)
