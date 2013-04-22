@@ -128,7 +128,7 @@ def downsweep_terms_pattern(N,term,identity):
 
 def downsweep_summation(N):
   def term(x): return 'ghostsum[term(x,%s)]' % x
-  cases = downsweep_terms_pattern(N,term,0)
+  cases = downsweep_terms_pattern(N,term,'ridentity')
   cases.append('ghostsum[x]')
   return '(result[x] == (%s))' % summation(cases, 'raddf')
 

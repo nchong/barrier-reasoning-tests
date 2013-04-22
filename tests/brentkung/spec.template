@@ -62,6 +62,10 @@ __axiom(get_num_groups(0) == 1);
   #define raddf(x,y) (x | y)
   #define raddf_primed(x,y) (x | y)
   #define ridentity 0
+#elif defined(BINOP_AND)
+  #define raddf(x,y) (x & y)
+  #define raddf_primed(x,y) (x & y)
+  #define ridentity (rtype)(-1)
 #elif defined(BINOP_MAX)
   #define raddf(x,y) __ite_rtype(x < y, y, x)
   #define raddf_primed(x,y) __ite_rtype(x < y, y, x)
