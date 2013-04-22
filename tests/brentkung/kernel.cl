@@ -203,16 +203,26 @@ __kernel void scan(__local rtype *len) {
 #endif
 
 #ifdef INC_ENDSPEC
+#if defined(SPEC_THREADWISE)
   __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
   __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), downsweep_instantiation);
   barrier(CLK_LOCAL_MEM_FENCE);
-#if defined(SPEC_THREADWISE)
   __non_temporal(__assert(__implies(tid == 0, raddf(result[0], len[1]) == result[1])));
   __non_temporal(__assert(__implies(tid  < ((N/2)-1), raddf(result[mul2(tid)+1], len[mul2(tid)+2]) == result[mul2(tid)+2])));
   __non_temporal(__assert(__implies((tid < other_tid) & (other_tid < ((N/2)-1)), raddf(result[mul2(tid)+2], len[mul2(tid)+3]) <= result[mul2(other_tid)+1])));
   __non_temporal(__assert(__implies((0 < tid) & (tid < ((N/2)-1)) & (other_tid == 0), raddf(result[mul2(tid)+2],len[mul2(tid)+3]) <= result[N-1])));
 #elif defined(SPEC_ELEMENTWISE)
+  __barrier_invariant(final_upsweep_barrier(tid,ghostsum,len), upsweep_instantiation);
+  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), downsweep_instantiation);
+  barrier(CLK_LOCAL_MEM_FENCE);
   __non_temporal(__assert(__implies(tid < other_tid, raddf(result[tid], len[tid+1]) <= result[other_tid])));
+#elif defined(SPEC_PAIR)
+  __barrier_invariant(final_downsweep_barrier(tid,result,ghostsum), x2t(tid), x2t(other_tid));
+  barrier(CLK_LOCAL_MEM_FENCE);
+// (a) prescan specification
+  __non_temporal(__assert((result[tid].lo == 0) & (result[tid].hi == tid+1)));
+// (b) monotonic-like specification
+  __non_temporal(__assert(__implies(tid < other_tid, result[tid].hi < result[other_tid].hi)));
 #else
   #error SPEC_THREADWISE|SPEC_ELEMENTWISE must be defined
 #endif
