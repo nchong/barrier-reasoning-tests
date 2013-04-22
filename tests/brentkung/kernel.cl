@@ -185,7 +185,14 @@ __kernel void scan(__local rtype *len) {
     if (t < (d - 1)) {
       dtype ai = (offset * (t + 1)) - 1;
       dtype bi = ai + (offset >> 1);
+#ifdef BINOP_PAIR
+      __assert(result[ai].lo <= result[ai].hi);
+      __assert(                 result[ai].hi == result[bi].lo);
+      __assert(                                  result[bi].lo <= result[bi].hi);
+      result[bi].lo = result[ai].lo;
+#else
       result[bi] = raddf(result[ai], result[bi]);
+#endif
     }
   }
 #elif INC_ENDSPEC

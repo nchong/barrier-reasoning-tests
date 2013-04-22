@@ -170,6 +170,9 @@ __axiom(get_num_groups(0) == 1);
 
 #define downsweep(offset,result,ghostsum,x) \
   downsweep_core(offset,result,ghostsum,x) & downsweep_nooverflow(offset,result,ghostsum,x)
+#elif defined(BINOP_PAIR)
+#define downsweep(offset,result,ghostsum,x) \
+  {{pair_downsweep(N)}}
 #else
 #define downsweep(offset,result,ghostsum,x) \
   downsweep_core(offset,result,ghostsum,x)

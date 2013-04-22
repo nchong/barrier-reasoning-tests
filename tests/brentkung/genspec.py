@@ -157,6 +157,16 @@ def downsweep_nooverflow(N):
   rhs = '__add_noovfl(%s)' % ', '.join(cases)
   return '__implies(%s, %s)' % (downsweep_updated_condition(N), rhs)
 
+def pair_downsweep(N):
+  hi = '(result[x].hi == (x+1))'
+  # taken from pair_upsweep but assuming fixed offset=N
+  offsets = [ 2**i for i in range(1, log2(N)+1) ]
+  def term(offset):
+    return '__ite_dtype(isvertex(x,%d), %d, 0)' % (offset,offset/2)
+  terms = [ term(offset) for offset in offsets ]
+  lo = '(result[x].lo == __ite_dtype(%s, 0, (x - (%s))))' % (downsweep_updated_condition(N), ' + '.join(reversed(terms)))
+  return '(' + ' & \\\n   '.join([hi,lo]) + ')'
+
 def downsweep_barrier(N,mul2shift=False):
   def genrhs(aibi,f,offset):
     idx = '%s_idx(%d,tid)' % (aibi,f(offset))
@@ -242,6 +252,7 @@ def genspec(N):
   t = env.get_template('spec.template')
   return t.render(N=N, NDIV2=N/2,
     pair_upsweep=pair_upsweep,
+    pair_downsweep=pair_downsweep,
     upsweep_core=upsweep_core,
     upsweep_nooverflow=upsweep_nooverflow,
     upsweep_barrier=upsweep_barrier,
