@@ -142,8 +142,7 @@ def interval_downsweep(N):
   return '(' + 'result[x] == __ite_rtype(isvertex(x,mul2(offset)), %s, ghostsum[x])' % ' | '.join(cases) + ')'
 
 def pair_downsweep(N):
-  cases = downsweep_pattern(N,(lambda x: 'hi_term(%s,x)' % x),'0')
-  hi = '(result[x].hi == __ite_dtype(isvertex(x,mul2(offset)), %s, ghostsum[x].hi))' % summation(cases, 'max')
+  hi = '(result[x].hi == __ite_dtype(isvertex(x,mul2(offset)), (x + 1 - __ite_dtype(offset == 0, 1, mul2(offset))), ghostsum[x].hi))'
   lo = '(result[x].lo == __ite_dtype(isvertex(x,mul2(offset)),  0, ghostsum[x].lo))'
   return '(' + ' & '.join([hi,lo]) + ')'
 
