@@ -31,10 +31,9 @@ int main(int argc, char **argv) {
   klee_make_symbolic(idx, ArraySize, "idx");
 
   // specification of prefix sum
-  for (uint i=0; i<N; ++i) {
-    for (uint j=i+1; j<N; ++j) {
-      klee_assume(idx[i] + PREDICATE(in[i]) <= idx[j]);
-    }
+  klee_assume(idx[0] == 0);
+  for (uint i=0; i<N-1; ++i) {
+    klee_assume(idx[i] + PREDICATE(in[i]) == idx[i+1]);
   }
 
   for (uint i=0; i<N; ++i) {
