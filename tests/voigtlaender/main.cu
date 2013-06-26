@@ -9,6 +9,8 @@
   #include "blelloch.h"
 #elif  SCAN_BRENTKUNG
   #include "brentkung.h"
+#elif  SCAN_SKLANSKY
+  #include "sklansky.h"
 #elif  SCAN_KOGGESTONE
   #include "koggestone.h"
 #else
