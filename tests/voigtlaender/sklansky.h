@@ -12,7 +12,7 @@ __device__ void scan(char *input, char *output, O op) {
     unsigned block = 2 * (t - (t & (d - 1)));
     unsigned me    = block + (t & (d - 1)) + d;
     unsigned spine = block + d - 1;
-    result[me] = op(result[spine], result[me])
+    result[me] = op(result[spine], result[me]);
   }
 
   output[2*t] = result[2*t];
