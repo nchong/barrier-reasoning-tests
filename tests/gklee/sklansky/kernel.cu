@@ -61,7 +61,7 @@ __global__ void sklansky(rtype *len, rtype *out) {
     unsigned block = 2 * (t - (t & (d - 1)));
     unsigned me    = block + (t & (d - 1)) + d;
     unsigned spine = block + d - 1;
-    result[me] = op(result[spine], result[me]);
+    result[me] = OP(result[spine], result[me]);
   }
   __syncthreads();
 
