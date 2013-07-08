@@ -15,6 +15,7 @@ __device__ void scan(char *input, char *output, O op) {
     result[me] = op(result[spine], result[me]);
   }
 
+  __syncthreads();
   output[2*t] = result[2*t];
   output[2*t+1] = result[2*t+1];
 }
